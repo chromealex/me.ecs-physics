@@ -4,6 +4,7 @@
   "displayName": "ME.ECS Physics",
   "description": "ME.ECS Physics Package.",
   "unity": "2020.3",
+  "license": "UCL",
   "dependencies": {
     "com.unity.collections": "1.0.0-pre.6",
     "com.unity.ui": "1.0.0-preview.18",
