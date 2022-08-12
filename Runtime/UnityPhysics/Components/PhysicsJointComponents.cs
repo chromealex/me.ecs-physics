@@ -393,7 +393,7 @@ namespace ME.ECS.Essentials.Physics.Components
 
             uint v = 0x3fc90fdb;
             #if FIXED_POINT_MATH
-            var fv = new sfloat(v);
+            var fv = sfloat.FromRaw(v);
             #else
             var fv = *(float*)&v;
             #endif
