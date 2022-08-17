@@ -9,7 +9,8 @@
         "Unity.Mathematics",
         "ME.ECS.IL2CPP",
         "ME.Pools",
-        "ME.ECS.FilterBag"
+        "ME.ECS.FilterBag",
+        "ME.ECS.Transform"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

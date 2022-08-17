@@ -6,7 +6,8 @@
         "ME.ECS.Tests",
         "ME.ECS",
         "Unity.Mathematics",
-        "ME.ECS.FPMath"
+        "ME.ECS.FPMath",
+        "ME.ECS.Transform"
     ],
     "includePlatforms": [
         "Editor"

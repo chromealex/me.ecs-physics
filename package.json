@@ -6,6 +6,7 @@
   "unity": "2020.3",
   "license": "UCL",
   "ecsdependencies": [
+    "com.me.ecs.transform",
     "com.me.ecs.filterbag"
   ],
   "dependencies": {
