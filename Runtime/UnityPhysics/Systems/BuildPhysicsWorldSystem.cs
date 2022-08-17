@@ -383,7 +383,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                         BodyIndex = this.physicsWorld.Bodies.Length - 1,
                         EntityBodyIndexMap = this.physicsWorld.CollisionWorld.EntityBodyIndexMap.AsParallelWriter(),
                     }.Schedule());
-
+                    
                     if (bag.Length > 0) {
 
                         jobHandles.Add(new FillBodiesJob() {
@@ -393,14 +393,14 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                             FirstBodyIndex = 0,
                             EntityBodyIndexMap = this.physicsWorld.CollisionWorld.EntityBodyIndexMap.AsParallelWriter(),
                         }.Schedule(bag));
-
+                        
                         jobHandles.Add(new FillMotionJob() {
                             bagMotion = bagMotion,
                             defaultPhysicsMass = PhysicsMass.CreateDynamic(ME.ECS.Essentials.Physics.MassProperties.UnitSphere, 1f),
                             motionDatas = motionDatas,
                             motionVelocities = motionVelocities,
                         }.Schedule(bag));
-
+                        
                     }
 
                     if (bagStatic.Length > 0) {

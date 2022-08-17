@@ -307,7 +307,7 @@ namespace ME.ECS.Essentials.Physics
                 dynamicBranchCount = m_DynamicTree.BranchCount,
                 staticBranchCount = m_StaticTree.BranchCount
             }.Schedule(inputDeps);
-
+            
             // Build pairs of branch node indices
             JobHandle dynamicVsDynamicPairs = new DynamicVsDynamicBuildBranchNodePairsJob
             {
@@ -329,7 +329,7 @@ namespace ME.ECS.Essentials.Physics
             //       if this is a performance issue we can use [NativeDisableContainerSafetyRestriction] on DynamicVsDynamicBuildBranchNodePairsJob & StaticVsDynamicBuildBranchNodePairsJob
             JobHandle dynamicConstruct = NativeStream.ScheduleConstruct(out dynamicVsDynamicPairsStream, dynamicVsDynamicNodePairIndices, dynamicVsDynamicPairs, Allocator.TempJob);
             JobHandle staticConstruct = NativeStream.ScheduleConstruct(out staticVsDynamicPairsStream, staticVsDynamicNodePairIndices, staticVsDynamicPairs, Allocator.TempJob);
-
+            
             // Write all overlaps to the stream (also deallocates nodePairIndices)
             JobHandle dynamicVsDynamicHandle = new DynamicVsDynamicFindOverlappingPairsJob
             {
