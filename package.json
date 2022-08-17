@@ -5,6 +5,9 @@
   "description": "ME.ECS Physics Package.",
   "unity": "2020.3",
   "license": "UCL",
+  "ecsdependencies": [
+    "com.me.ecs.filterbag"
+  ],
   "dependencies": {
     "com.unity.collections": "1.0.0-pre.6",
     "com.unity.ui": "1.0.0-preview.18",
