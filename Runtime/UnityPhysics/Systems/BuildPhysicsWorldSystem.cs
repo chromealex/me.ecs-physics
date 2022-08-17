@@ -469,13 +469,8 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
                         foreach (var evt in this.simulationContext.CollisionEvents) {
 
-                            var entityAEvt = new Entity(EntityFlag.OneShot);
-                            entityAEvt.SetOneShot(new PhysicsEventOnCollision() {
-                                data = evt,
-                            });
-
-                            var entityBEvt = new Entity(EntityFlag.OneShot);
-                            entityBEvt.SetOneShot(new PhysicsEventOnCollision() {
+                            var entityEvt = new Entity(EntityFlag.OneShot);
+                            entityEvt.SetOneShot(new PhysicsEventOnCollision() {
                                 data = evt,
                             });
 
@@ -487,13 +482,8 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
                         foreach (var evt in this.simulationContext.TriggerEvents) {
 
-                            var entityAEvt = new Entity(EntityFlag.OneShot);
-                            entityAEvt.SetOneShot(new PhysicsEventOnTrigger() {
-                                data = evt,
-                            });
-
-                            var entityBEvt = new Entity(EntityFlag.OneShot);
-                            entityBEvt.SetOneShot(new PhysicsEventOnTrigger() {
+                            var entityEvt = new Entity(EntityFlag.OneShot);
+                            entityEvt.SetOneShot(new PhysicsEventOnTrigger() {
                                 data = evt,
                             });
 

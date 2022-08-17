@@ -1,6 +1,6 @@
 {
   "name": "com.me.ecs.physics",
-  "version": "1.0.45",
+  "version": "1.0.46",
   "displayName": "ME.ECS Physics",
   "description": "ME.ECS Physics Package.",
   "unity": "2020.3",
