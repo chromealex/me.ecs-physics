@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 
@@ -275,26 +276,26 @@ namespace ME.ECS.Essentials.Physics
         // This is the inverse function to CalculateConstraintTauAndDamping
         // Given a final Tau and Damping you can get the original Spring Frequency and Damping for a given solver step
         // See Unity.Physics.Constraint struct for discussion about default Spring Frequency and Damping values.
-        public static void CalculateSpringFrequencyAndDamping(sfloat constraintTau, sfloat constraintDamping, sfloat timestep, int iterations, out sfloat springFrequency, out sfloat springDamping)
+        public static void CalculateSpringFrequencyAndDamping(tfloat constraintTau, tfloat constraintDamping, tfloat timestep, int iterations, out tfloat springFrequency, out tfloat springDamping)
         {
             int n = iterations;
-            sfloat h = timestep;
-            sfloat hh = h * h;
-            sfloat a = 1.0f - constraintDamping;
-            sfloat aSum = 1.0f;
+            tfloat h = timestep;
+            tfloat hh = h * h;
+            tfloat a = 1.0f - constraintDamping;
+            tfloat aSum = 1.0f;
             for (int i = 1; i < n; i++)
             {
                 aSum += math.pow(a, i);
             }
 
-            sfloat w = math.sqrt(constraintTau * aSum / math.pow(a, n)) / h;
-            sfloat ww = w * w;
+            tfloat w = math.sqrt(constraintTau * aSum / math.pow(a, n)) / h;
+            tfloat ww = w * w;
             springFrequency = w / (2.0f * math.PI);
             springDamping = (math.pow(a, -n) - 1 - hh * ww) / (2.0f * h * w);
         }
 
         // This is the inverse function to CalculateSpringFrequencyAndDamping
-        public static void CalculateConstraintTauAndDamping(sfloat springFrequency, sfloat springDamping, sfloat timestep, int iterations, out sfloat constraintTau, out sfloat constraintDamping)
+        public static void CalculateConstraintTauAndDamping(tfloat springFrequency, tfloat springDamping, tfloat timestep, int iterations, out tfloat constraintTau, out tfloat constraintDamping)
         {
             // TODO
             // - it's a significant amount of work to calculate tau and damping.  They depend on step length, so they have to be calculated each step.
@@ -336,20 +337,20 @@ namespace ME.ECS.Essentials.Physics
 
             */
 
-            sfloat h = timestep;
-            sfloat w = springFrequency * 2.0f * (float)math.PI; // convert oscillations/sec to radians/sec
-            sfloat z = springDamping;
-            sfloat hw = h * w;
-            sfloat hhww = hw * hw;
+            tfloat h = timestep;
+            tfloat w = springFrequency * 2.0f * (float)math.PI; // convert oscillations/sec to radians/sec
+            tfloat z = springDamping;
+            tfloat hw = h * w;
+            tfloat hhww = hw * hw;
 
             // a = 1-d, aExp = a^iterations, aSum = aExp / sum(i in [0, iterations), a^i)
-            sfloat aExp = 1.0f / (1.0f + hhww + 2.0f * hw * z);
-            sfloat a, aSum;
+            tfloat aExp = 1.0f / (1.0f + hhww + 2.0f * hw * z);
+            tfloat a, aSum;
             if (iterations == 4)
             {
                 // special case expected iterations = 4
-                sfloat invA2 = math.rsqrt(aExp);
-                sfloat a2 = invA2 * aExp;
+                tfloat invA2 = math.rsqrt(aExp);
+                tfloat a2 = invA2 * aExp;
                 a = math.rsqrt(invA2);
                 aSum = (1.0f + a2 + a * (1.0f + a2));
             }
@@ -368,21 +369,21 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Returns x - clamp(x, min, max)
-        public static sfloat CalculateError(sfloat x, sfloat min, sfloat max)
+        public static tfloat CalculateError(tfloat x, tfloat min, tfloat max)
         {
-            sfloat error = math.max(x - max, 0.0f);
+            tfloat error = math.max(x - max, 0.0f);
             error = math.min(x - min, error);
             return error;
         }
 
         // Returns the amount of error for the solver to correct, where initialError is the pre-integration error and predictedError is the expected post-integration error
-        public static sfloat CalculateCorrection(sfloat predictedError, sfloat initialError, sfloat tau, sfloat damping)
+        public static tfloat CalculateCorrection(tfloat predictedError, tfloat initialError, tfloat tau, tfloat damping)
         {
             return math.max(predictedError - initialError, 0.0f) * damping + math.min(predictedError, initialError) * tau;
         }
 
         // Integrate the relative orientation of a pair of bodies, faster and less memory than storing both bodies' orientations and integrating them separately
-        public static quaternion IntegrateOrientationBFromA(quaternion bFromA, float3 angularVelocityA, float3 angularVelocityB, sfloat timestep)
+        public static quaternion IntegrateOrientationBFromA(quaternion bFromA, float3 angularVelocityA, float3 angularVelocityB, tfloat timestep)
         {
             quaternion dqA = Integrator.IntegrateAngularVelocity(angularVelocityA, timestep);
             quaternion dqB = Integrator.IntegrateAngularVelocity(angularVelocityB, timestep);
@@ -390,17 +391,17 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Calculate the inverse effective mass of a linear jacobian
-        public static sfloat CalculateInvEffectiveMassDiag(
-            float3 angA, float3 invInertiaA, sfloat invMassA,
-            float3 angB, float3 invInertiaB, sfloat invMassB)
+        public static tfloat CalculateInvEffectiveMassDiag(
+            float3 angA, float3 invInertiaA, tfloat invMassA,
+            float3 angB, float3 invInertiaB, tfloat invMassB)
         {
             float3 angularPart = angA * angA * invInertiaA + angB * angB * invInertiaB;
-            sfloat linearPart = invMassA + invMassB;
+            tfloat linearPart = invMassA + invMassB;
             return (angularPart.x + angularPart.y) + (angularPart.z + linearPart);
         }
 
         // Calculate the inverse effective mass for a pair of jacobians with perpendicular linear parts
-        public static sfloat CalculateInvEffectiveMassOffDiag(
+        public static tfloat CalculateInvEffectiveMassOffDiag(
             float3 angA0, float3 angA1, float3 invInertiaA,
             float3 angB0, float3 angB1, float3 invInertiaB)
         {
@@ -411,9 +412,9 @@ namespace ME.ECS.Essentials.Physics
         public static bool InvertSymmetricMatrix(float3 diag, float3 offDiag, out float3 invDiag, out float3 invOffDiag)
         {
             float3 offDiagSq = offDiag.zyx * offDiag.zyx;
-            sfloat determinant = (Math.HorizontalMul(diag) + 2.0f * Math.HorizontalMul(offDiag) - math.csum(offDiagSq * diag));
+            tfloat determinant = (Math.HorizontalMul(diag) + 2.0f * Math.HorizontalMul(offDiag) - math.csum(offDiagSq * diag));
             bool determinantOk = (determinant != 0);
-            sfloat invDeterminant = math.select(0.0f, 1.0f / determinant, determinantOk);
+            tfloat invDeterminant = math.select(0.0f, 1.0f / determinant, determinantOk);
             invDiag = (diag.yxx * diag.zzy - offDiagSq) * invDeterminant;
             invOffDiag = (offDiag.yxx * offDiag.zzy - diag.zyx * offDiag) * invDeterminant;
             return determinantOk;

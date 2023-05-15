@@ -3,7 +3,7 @@
 using ME.ECS.Mathematics;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics.Components {
@@ -82,8 +82,8 @@ namespace ME.ECS.Essentials.Physics.Components {
 
     public struct PhysicsDamping : IComponent {
 
-        public sfloat Linear;
-        public sfloat Angular;
+        public tfloat Linear;
+        public tfloat Angular;
 
     }
     
@@ -96,14 +96,14 @@ namespace ME.ECS.Essentials.Physics.Components {
     public struct PhysicsMass : IComponent {
 
         public RigidTransform Transform;
-        public sfloat InverseMass;
+        public tfloat InverseMass;
         public float3 InverseInertia;
-        public sfloat AngularExpansionFactor;
+        public tfloat AngularExpansionFactor;
         
         public float3 CenterOfMass { get => Transform.pos; set => Transform.pos = value; }
         public quaternion InertiaOrientation { get => Transform.rot; set => Transform.rot = value; }
 
-        public static PhysicsMass CreateDynamic(ME.ECS.Essentials.Physics.MassProperties massProperties, sfloat mass)
+        public static PhysicsMass CreateDynamic(ME.ECS.Essentials.Physics.MassProperties massProperties, tfloat mass)
         {
             //SafetyChecks.CheckFiniteAndPositiveAndThrow(mass, nameof(mass));
 
@@ -131,7 +131,7 @@ namespace ME.ECS.Essentials.Physics.Components {
 
     public struct PhysicsGravityFactor : IComponent {
 
-        public sfloat value;
+        public tfloat value;
 
     }
 

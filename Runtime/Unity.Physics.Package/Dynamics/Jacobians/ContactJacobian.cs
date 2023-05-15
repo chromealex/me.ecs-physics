@@ -3,9 +3,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -14,8 +15,8 @@ namespace ME.ECS.Essentials.Physics
     {
         public float3 AngularA;
         public float3 AngularB;
-        public sfloat EffectiveMass;
-        public sfloat Impulse; // Accumulated impulse
+        public tfloat EffectiveMass;
+        public tfloat Impulse; // Accumulated impulse
     }
 
     public struct ContactJacAngAndVelToReachCp  // TODO: better name
@@ -24,7 +25,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Velocity needed to reach the contact plane in one frame,
         // both if approaching (negative) and depenetrating (positive)
-        public sfloat VelToReachCp;
+        public tfloat VelToReachCp;
     }
 
     public struct SurfaceVelocity
@@ -37,9 +38,9 @@ namespace ME.ECS.Essentials.Physics
     public struct MassFactors
     {
         public float3 InverseInertiaFactorA;
-        public sfloat InverseMassFactorA;
+        public tfloat InverseMassFactorA;
         public float3 InverseInertiaFactorB;
-        public sfloat InverseMassFactorB;
+        public tfloat InverseMassFactorB;
 
         public static MassFactors Default => new MassFactors
         {
@@ -55,7 +56,7 @@ namespace ME.ECS.Essentials.Physics
         public int NumContacts;
         public float3 Normal;
 
-        internal static sfloat GetJacVelocity(float3 linear, ContactJacobianAngular jacAngular,
+        internal static tfloat GetJacVelocity(float3 linear, ContactJacobianAngular jacAngular,
             float3 linVelA, float3 angVelA, float3 linVelB, float3 angVelB)
         {
             float3 temp = (linVelA - linVelB) * linear;
@@ -79,7 +80,7 @@ namespace ME.ECS.Essentials.Physics
         public ContactJacobianAngular AngularFriction; // EffectiveMass stores friction effective mass matrix element (2, 2)
         public float3 FrictionEffectiveMassOffDiag; // Effective mass matrix (0, 1), (0, 2), (1, 2) == (1, 0), (2, 0), (2, 1)
 
-        public sfloat CoefficientOfFriction;
+        public tfloat CoefficientOfFriction;
 
         // Generic solve method that dispatches to specific ones
         public void Solve(
@@ -121,23 +122,23 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // Solve normal impulses
-            sfloat sumImpulses = 0.0f;
-            sfloat totalAccumulatedImpulse = 0.0f;
+            tfloat sumImpulses = 0.0f;
+            tfloat totalAccumulatedImpulse = 0.0f;
             bool forceCollisionEvent = false;
             for (int j = 0; j < BaseJacobian.NumContacts; j++)
             {
                 ref ContactJacAngAndVelToReachCp jacAngular = ref jacHeader.AccessAngularJacobian(j);
 
                 // Solve velocity so that predicted contact distance is greater than or equal to zero
-                sfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
+                tfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
                     tempVelocityA.LinearVelocity, tempVelocityA.AngularVelocity, tempVelocityB.LinearVelocity, tempVelocityB.AngularVelocity);
-                sfloat dv = jacAngular.VelToReachCp - relativeVelocity;
+                tfloat dv = jacAngular.VelToReachCp - relativeVelocity;
 
-                sfloat impulse = dv * jacAngular.Jac.EffectiveMass;
-                sfloat accumulatedImpulse = math.max(jacAngular.Jac.Impulse + impulse, 0.0f);
+                tfloat impulse = dv * jacAngular.Jac.EffectiveMass;
+                tfloat accumulatedImpulse = math.max(jacAngular.Jac.Impulse + impulse, 0.0f);
                 if (accumulatedImpulse != jacAngular.Jac.Impulse)
                 {
-                    sfloat deltaImpulse = accumulatedImpulse - jacAngular.Jac.Impulse;
+                    tfloat deltaImpulse = accumulatedImpulse - jacAngular.Jac.Impulse;
                     ApplyImpulse(deltaImpulse, BaseJacobian.Normal, jacAngular.Jac, ref tempVelocityA, ref tempVelocityB,
                         motionStabilizationSolverInputA.InverseInertiaScale, motionStabilizationSolverInputB.InverseInertiaScale);
                 }
@@ -188,17 +189,17 @@ namespace ME.ECS.Essentials.Physics
                         var surfVel = jacHeader.AccessSurfaceVelocity();
 
                         Math.CalculatePerpendicularNormalized(BaseJacobian.Normal, out float3 dir0, out float3 dir1);
-                        sfloat linVel0 = math.dot(surfVel.LinearVelocity, dir0);
-                        sfloat linVel1 = math.dot(surfVel.LinearVelocity, dir1);
+                        tfloat linVel0 = math.dot(surfVel.LinearVelocity, dir0);
+                        tfloat linVel1 = math.dot(surfVel.LinearVelocity, dir1);
 
-                        sfloat angVelProj = math.dot(surfVel.AngularVelocity, BaseJacobian.Normal);
+                        tfloat angVelProj = math.dot(surfVel.AngularVelocity, BaseJacobian.Normal);
                         extraFrictionDv = new float3(linVel0, linVel1, angVelProj);
                     }
 
                     // Calculate the jacobian dot velocity for each of the friction jacobians
-                    sfloat dv0 = extraFrictionDv.x - BaseContactJacobian.GetJacVelocity(frictionDir0, Friction0, frictionLinVelA, frictionAngVelA, frictionLinVelB, frictionAngVelB);
-                    sfloat dv1 = extraFrictionDv.y - BaseContactJacobian.GetJacVelocity(frictionDir1, Friction1, frictionLinVelA, frictionAngVelA, frictionLinVelB, frictionAngVelB);
-                    sfloat dva = extraFrictionDv.z - math.csum(AngularFriction.AngularA * frictionAngVelA + AngularFriction.AngularB * frictionAngVelB);
+                    tfloat dv0 = extraFrictionDv.x - BaseContactJacobian.GetJacVelocity(frictionDir0, Friction0, frictionLinVelA, frictionAngVelA, frictionLinVelB, frictionAngVelB);
+                    tfloat dv1 = extraFrictionDv.y - BaseContactJacobian.GetJacVelocity(frictionDir1, Friction1, frictionLinVelA, frictionAngVelA, frictionLinVelB, frictionAngVelB);
+                    tfloat dva = extraFrictionDv.z - math.csum(AngularFriction.AngularA * frictionAngVelA + AngularFriction.AngularB * frictionAngVelB);
 
                     // Reassemble the effective mass matrix
                     float3 effectiveMassDiag = new float3(Friction0.EffectiveMass, Friction1.EffectiveMass, AngularFriction.EffectiveMass);
@@ -209,8 +210,8 @@ namespace ME.ECS.Essentials.Physics
                 }
 
                 // Clip TODO.ma calculate some contact radius and use it to influence balance between linear and angular friction
-                sfloat maxImpulse = sumImpulses * CoefficientOfFriction * stepInput.InvNumSolverIterations;
-                sfloat frictionImpulseSquared = math.lengthsq(imp);
+                tfloat maxImpulse = sumImpulses * CoefficientOfFriction * stepInput.InvNumSolverIterations;
+                tfloat frictionImpulseSquared = math.lengthsq(imp);
                 imp *= math.min(1.0f, maxImpulse * math.rsqrt(frictionImpulseSquared));
 
                 // Apply impulses
@@ -253,9 +254,9 @@ namespace ME.ECS.Essentials.Physics
             {
                 ref ContactJacAngAndVelToReachCp jacAngular = ref jacHeader.AccessAngularJacobian(j);
 
-                sfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
+                tfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
                     velocityA.LinearVelocity, velocityA.AngularVelocity, velocityB.LinearVelocity, velocityB.AngularVelocity);
-                sfloat dv = jacAngular.VelToReachCp - relativeVelocity;
+                tfloat dv = jacAngular.VelToReachCp - relativeVelocity;
                 if (jacAngular.VelToReachCp > 0 || dv > 0)
                 {
                     // Export collision event only if impulse would be applied, or objects are penetrating
@@ -270,20 +271,20 @@ namespace ME.ECS.Essentials.Physics
         void GetFrictionVelocities(
             float3 inputLinearVelocity, float3 inputAngularVelocity,
             float3 intermediateLinearVelocity, float3 intermediateAngularVelocity,
-            float3 inertia, sfloat mass,
+            float3 inertia, tfloat mass,
             out float3 frictionLinearVelocityOut, out float3 frictionAngularVelocityOut)
         {
-            sfloat inputEnergy;
+            tfloat inputEnergy;
             {
-                sfloat linearEnergySq = mass * math.lengthsq(inputLinearVelocity);
-                sfloat angularEnergySq = math.dot(inertia * inputAngularVelocity, inputAngularVelocity);
+                tfloat linearEnergySq = mass * math.lengthsq(inputLinearVelocity);
+                tfloat angularEnergySq = math.dot(inertia * inputAngularVelocity, inputAngularVelocity);
                 inputEnergy = linearEnergySq + angularEnergySq;
             }
 
-            sfloat intermediateEnergy;
+            tfloat intermediateEnergy;
             {
-                sfloat linearEnergySq = mass * math.lengthsq(intermediateLinearVelocity);
-                sfloat angularEnergySq = math.dot(inertia * intermediateAngularVelocity, intermediateAngularVelocity);
+                tfloat linearEnergySq = mass * math.lengthsq(intermediateLinearVelocity);
+                tfloat angularEnergySq = math.dot(inertia * intermediateAngularVelocity, intermediateAngularVelocity);
                 intermediateEnergy = linearEnergySq + angularEnergySq;
             }
 
@@ -304,15 +305,15 @@ namespace ME.ECS.Essentials.Physics
         }
 
         private static void ApplyImpulse(
-            sfloat impulse, float3 linear, ContactJacobianAngular jacAngular,
+            tfloat impulse, float3 linear, ContactJacobianAngular jacAngular,
             ref MotionVelocity velocityA, ref MotionVelocity velocityB)
         {
             ApplyImpulse(impulse, linear, jacAngular, ref velocityA, ref velocityB, 1, 1);
         }
         private static void ApplyImpulse(
-            sfloat impulse, float3 linear, ContactJacobianAngular jacAngular,
+            tfloat impulse, float3 linear, ContactJacobianAngular jacAngular,
             ref MotionVelocity velocityA, ref MotionVelocity velocityB,
-            sfloat inverseInertiaScaleA, sfloat inverseInertiaScaleB)
+            tfloat inverseInertiaScaleA, tfloat inverseInertiaScaleB)
         {
             velocityA.ApplyLinearImpulse(impulse * linear);
             velocityB.ApplyLinearImpulse(-impulse * linear);
@@ -322,7 +323,7 @@ namespace ME.ECS.Essentials.Physics
             velocityB.ApplyAngularImpulse(impulse * jacAngular.AngularB * inverseInertiaScaleB);
         }
 
-        private unsafe void ExportCollisionEvent(sfloat totalAccumulatedImpulse, [NoAlias] ref JacobianHeader jacHeader,
+        private unsafe void ExportCollisionEvent(tfloat totalAccumulatedImpulse, [NoAlias] ref JacobianHeader jacHeader,
             [NoAlias] ref NativeStream.Writer collisionEventsWriter)
         {
             // Write size before every event
@@ -371,9 +372,9 @@ namespace ME.ECS.Essentials.Physics
                 ref ContactJacAngAndVelToReachCp jacAngular = ref jacHeader.AccessAngularJacobian(j);
 
                 // Solve velocity so that predicted contact distance is greater than or equal to zero
-                sfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
+                tfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(BaseJacobian.Normal, jacAngular.Jac,
                     velocityA.LinearVelocity, velocityA.AngularVelocity, velocityB.LinearVelocity, velocityB.AngularVelocity);
-                sfloat dv = jacAngular.VelToReachCp - relativeVelocity;
+                tfloat dv = jacAngular.VelToReachCp - relativeVelocity;
                 if (jacAngular.VelToReachCp > 0 || dv > 0)
                 {
                     // Export trigger event only if impulse would be applied, or objects are penetrating

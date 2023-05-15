@@ -2,9 +2,10 @@ using System;
 using ME.ECS;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.BoundingVolumeHierarchy;
@@ -16,7 +17,7 @@ namespace ME.ECS.Essentials.Physics
     public struct PointDistanceInput
     {
         public float3 Position;
-        public sfloat MaxDistance;
+        public tfloat MaxDistance;
         public CollisionFilter Filter;
 
         internal QueryContext QueryContext;
@@ -27,11 +28,11 @@ namespace ME.ECS.Essentials.Physics
     {
         public unsafe Collider* Collider;
         public RigidTransform Transform;
-        public sfloat MaxDistance;
+        public tfloat MaxDistance;
 
         internal QueryContext QueryContext;
 
-        public ColliderDistanceInput(BlobAssetReference<Collider> collider, RigidTransform transform, sfloat maxDistance)
+        public ColliderDistanceInput(BlobAssetReference<Collider> collider, RigidTransform transform, tfloat maxDistance)
         {
             unsafe
             {
@@ -51,7 +52,7 @@ namespace ME.ECS.Essentials.Physics
         /// NOT the percentage of max distance
         /// </summary>
         /// <value> Distance at which the hit occurred. </value>
-        public sfloat Fraction { get; set; }
+        public tfloat Fraction { get; set; }
 
         /// <summary>
         ///
@@ -93,7 +94,7 @@ namespace ME.ECS.Essentials.Physics
         ///
         /// </summary>
         /// <value> Distance at which the hit occurred. </value>
-        public sfloat Distance => Fraction;
+        public tfloat Distance => Fraction;
 
         /// <summary>
         /// Collider key of the query collider
@@ -133,13 +134,13 @@ namespace ME.ECS.Essentials.Physics
         // Additionally, with floating point numbers there are often numerical accuracy problems near distance = 0.  Some routines handle this with special
         // cases where distance^2 < distanceEpsSq, which is expected to be rare in normal usage.  distanceEpsSq is not an exact value, but chosen to be small
         // enough that at typical simulation scale the difference between distance = distanceEps and distance = 0 is negligible.
-        private static readonly sfloat distanceEpsSq = 1e-8f;
+        private static readonly tfloat distanceEpsSq = 1e-8f;
 
         public struct Result
         {
             public float3 PositionOnAinA;
             public float3 NormalInA;
-            public sfloat Distance;
+            public tfloat Distance;
 
             public float3 PositionOnBinA => PositionOnAinA - NormalInA * Distance;
         }
@@ -153,8 +154,8 @@ namespace ME.ECS.Essentials.Physics
         }
 
         public static unsafe Result ConvexConvex(
-            float3* verticesA, int numVerticesA, sfloat convexRadiusA,
-            float3* verticesB, int numVerticesB, sfloat convexRadiusB,
+            float3* verticesA, int numVerticesA, tfloat convexRadiusA,
+            float3* verticesB, int numVerticesB, tfloat convexRadiusB,
             MTransform aFromB)
         {
             ConvexConvexDistanceQueries.Result result = ConvexConvexDistanceQueries.ConvexConvex(
@@ -166,12 +167,12 @@ namespace ME.ECS.Essentials.Physics
             return result.ClosestPoints;
         }
 
-        private static Result PointPoint(float3 pointB, float3 diff, sfloat coreDistanceSq, sfloat radiusA, sfloat sumRadii)
+        private static Result PointPoint(float3 pointB, float3 diff, tfloat coreDistanceSq, tfloat radiusA, tfloat sumRadii)
         {
             bool distanceZero = coreDistanceSq == 0.0f;
-            sfloat invCoreDistance = math.select(math.rsqrt(coreDistanceSq), 0.0f, distanceZero);
+            tfloat invCoreDistance = math.select(math.rsqrt(coreDistanceSq), 0.0f, distanceZero);
             float3 normal = math.select(diff * invCoreDistance, new float3(0, 1, 0), distanceZero); // choose an arbitrary normal when the distance is zero
-            sfloat distance = coreDistanceSq * invCoreDistance;
+            tfloat distance = coreDistanceSq * invCoreDistance;
             return new Result
             {
                 NormalInA = normal,
@@ -180,10 +181,10 @@ namespace ME.ECS.Essentials.Physics
             };
         }
 
-        public static Result PointPoint(float3 pointA, float3 pointB, sfloat radiusA, sfloat sumRadii)
+        public static Result PointPoint(float3 pointA, float3 pointB, tfloat radiusA, tfloat sumRadii)
         {
             float3 diff = pointA - pointB;
-            sfloat coreDistanceSq = math.lengthsq(diff);
+            tfloat coreDistanceSq = math.lengthsq(diff);
             return PointPoint(pointB, diff, coreDistanceSq, radiusA, sumRadii);
         }
 
@@ -200,13 +201,13 @@ namespace ME.ECS.Essentials.Physics
             float3 posBinBoxA = Mul(Inverse(aFromBoxA), posBinA);
             float3 innerHalfExtents = boxA->Size * 0.5f - boxA->BevelRadius;
             float3 normalInBoxA;
-            sfloat distance;
+            tfloat distance;
             {
                 // from hkAabb::signedDistanceToPoint(), can optimize a lot
                 float3 projection = math.min(posBinBoxA, innerHalfExtents);
                 projection = math.max(projection, -innerHalfExtents);
                 float3 difference = projection - posBinBoxA;
-                sfloat distanceSquared = math.lengthsq(difference);
+                tfloat distanceSquared = math.lengthsq(difference);
 
                 // Check if the sphere center is inside the box
                 if (distanceSquared < 1e-6f)
@@ -229,7 +230,7 @@ namespace ME.ECS.Essentials.Physics
                 }
                 else
                 {
-                    sfloat invDistance = math.rsqrt(distanceSquared);
+                    tfloat invDistance = math.rsqrt(distanceSquared);
                     normalInBoxA = difference * invDistance;
                     distance = distanceSquared * invDistance;
                 }
@@ -245,8 +246,8 @@ namespace ME.ECS.Essentials.Physics
         }
 
         public static Result CapsuleSphere(
-            float3 capsuleVertex0, float3 capsuleVertex1, sfloat capsuleRadius,
-            float3 sphereCenter, sfloat sphereRadius,
+            float3 capsuleVertex0, float3 capsuleVertex1, tfloat capsuleRadius,
+            float3 sphereCenter, tfloat sphereRadius,
             MTransform aFromB)
         {
             // Transform the sphere into capsule space
@@ -254,12 +255,12 @@ namespace ME.ECS.Essentials.Physics
 
             // Point-segment distance
             float3 edgeA = capsuleVertex1 - capsuleVertex0;
-            sfloat dot = math.dot(edgeA, centerB - capsuleVertex0);
-            sfloat edgeLengthSquared = math.lengthsq(edgeA);
+            tfloat dot = math.dot(edgeA, centerB - capsuleVertex0);
+            tfloat edgeLengthSquared = math.lengthsq(edgeA);
             dot = math.max(dot, 0.0f);
             dot = math.min(dot, edgeLengthSquared);
-            sfloat invEdgeLengthSquared = 1.0f / edgeLengthSquared;
-            sfloat frac = dot * invEdgeLengthSquared;
+            tfloat invEdgeLengthSquared = 1.0f / edgeLengthSquared;
+            tfloat frac = dot * invEdgeLengthSquared;
             float3 pointOnA = capsuleVertex0 + edgeA * frac;
             return PointPoint(pointOnA, centerB, capsuleRadius, capsuleRadius + sphereRadius);
         }
@@ -270,26 +271,26 @@ namespace ME.ECS.Essentials.Physics
             // Find the closest point on edge A to the line containing edge B
             float3 diff = pointB - pointA;
 
-            sfloat r = math.dot(edgeA, edgeB);
-            sfloat s1 = math.dot(edgeA, diff);
-            sfloat s2 = math.dot(edgeB, diff);
-            sfloat lengthASq = math.lengthsq(edgeA);
-            sfloat lengthBSq = math.lengthsq(edgeB);
+            tfloat r = math.dot(edgeA, edgeB);
+            tfloat s1 = math.dot(edgeA, diff);
+            tfloat s2 = math.dot(edgeB, diff);
+            tfloat lengthASq = math.lengthsq(edgeA);
+            tfloat lengthBSq = math.lengthsq(edgeB);
 
-            sfloat invDenom, invLengthASq, invLengthBSq;
+            tfloat invDenom, invLengthASq, invLengthBSq;
             {
-                sfloat denom = lengthASq * lengthBSq - r * r;
+                tfloat denom = lengthASq * lengthBSq - r * r;
                 float3 inv = 1.0f / new float3(denom, lengthASq, lengthBSq);
                 invDenom = inv.x;
                 invLengthASq = inv.y;
                 invLengthBSq = inv.z;
             }
 
-            sfloat fracA = (s1 * lengthBSq - s2 * r) * invDenom;
+            tfloat fracA = (s1 * lengthBSq - s2 * r) * invDenom;
             fracA = math.clamp(fracA, 0.0f, 1.0f);
 
             // Find the closest point on edge B to the point on A just found
-            sfloat fracB = fracA * (invLengthBSq * r) - invLengthBSq * s2;
+            tfloat fracB = fracA * (invLengthBSq * r) - invLengthBSq * s2;
             fracB = math.clamp(fracB, 0.0f, 1.0f);
 
             // If the point on B was clamped then there may be a closer point on A to the edge
@@ -313,7 +314,7 @@ namespace ME.ECS.Essentials.Physics
             // Get the closest points on the capsules
             SegmentSegment(pointA, edgeA, pointB, edgeB, out float3 closestA, out float3 closestB);
             float3 diff = closestA - closestB;
-            sfloat coreDistanceSq = math.lengthsq(diff);
+            tfloat coreDistanceSq = math.lengthsq(diff);
             if (coreDistanceSq < distanceEpsSq)
             {
                 // Special case for extremely small distances, should be rare
@@ -347,7 +348,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Checks if the closest point on the triangle is on its face.  If so returns true and sets signedDistance to the distance along the normal, otherwise returns false
         private static bool PointTriangleFace(float3 point, float3 v0, float3 normal,
-            FourTransposedPoints verts, FourTransposedPoints edges, FourTransposedPoints perps, FourTransposedPoints rels, out sfloat signedDistance)
+            FourTransposedPoints verts, FourTransposedPoints edges, FourTransposedPoints perps, FourTransposedPoints rels, out tfloat signedDistance)
         {
             float4 dots = perps.Dot(rels);
             float4 dotsSq = dots * math.abs(dots);
@@ -365,7 +366,7 @@ namespace ME.ECS.Essentials.Physics
 
         public static Result TriangleSphere(
             float3 vertex0, float3 vertex1, float3 vertex2, float3 normal,
-            float3 sphereCenter, sfloat sphereRadius,
+            float3 sphereCenter, tfloat sphereRadius,
             MTransform aFromB)
         {
             // Sphere center in A-space (TODO.ma should probably work in sphere space, typical for triangle verts to be far from the origin in its local space)
@@ -379,7 +380,7 @@ namespace ME.ECS.Essentials.Physics
 
             // Check if the closest point is on the triangle face
             FourTransposedPoints rels = new FourTransposedPoints(pointB) - vertsA;
-            if (PointTriangleFace(pointB, vertex0, normal, vertsA, edgesA, perpsA, rels, out sfloat signedDistance))
+            if (PointTriangleFace(pointB, vertex0, normal, vertsA, edgesA, perpsA, rels, out tfloat signedDistance))
             {
                 return new Result
                 {
@@ -392,7 +393,7 @@ namespace ME.ECS.Essentials.Physics
             // Find the closest point on the triangle edges - project point onto the line through each edge, then clamp to the edge
             float4 nums = rels.Dot(edgesA);
             float4 dens = edgesA.Dot(edgesA);
-            float4 sols = math.clamp(nums / dens, (sfloat)0.0f, (sfloat)1.0f); // fraction along the edge TODO.ma see how it handles inf/nan from divide by zero
+            float4 sols = math.clamp(nums / dens, (tfloat)0.0f, (tfloat)1.0f); // fraction along the edge TODO.ma see how it handles inf/nan from divide by zero
             FourTransposedPoints projs = edgesA.MulT(sols) - rels;
             float4 distancesSq = projs.Dot(projs);
 
@@ -403,19 +404,19 @@ namespace ME.ECS.Essentials.Physics
             // Find the closest projected point
             bool less1 = distancesSq.x < distancesSq.y;
             float3 direction = math.select(proj1, proj0, less1);
-            sfloat distanceSq = math.select(distancesSq.y, distancesSq.x, less1);
+            tfloat distanceSq = math.select(distancesSq.y, distancesSq.x, less1);
 
             bool less2 = distanceSq < distancesSq.z;
             direction = math.select(proj2, direction, less2);
             distanceSq = math.select(distancesSq.z, distanceSq, less2);
 
-            sfloat triangleConvexRadius = 0.0f;
+            tfloat triangleConvexRadius = 0.0f;
             return PointPoint(pointB, direction, distanceSq, triangleConvexRadius, sphereRadius);
         }
 
         public static Result QuadSphere(
             float3 vertex0, float3 vertex1, float3 vertex2, float3 vertex3, float3 normalDirection,
-            float3 sphereCenter, sfloat sphereRadius,
+            float3 sphereCenter, tfloat sphereRadius,
             MTransform aFromB)
         {
             // TODO: Do this in one pass
@@ -425,7 +426,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // given two (normal, distance) pairs, select the one with smaller distance
-        private static void SelectMin(ref float3 dirInOut, ref sfloat distInOut, ref float3 posInOut, float3 newDir, sfloat newDist, float3 newPos)
+        private static void SelectMin(ref float3 dirInOut, ref tfloat distInOut, ref float3 posInOut, float3 newDir, tfloat newDist, float3 newPos)
         {
             bool less = newDist < distInOut;
             dirInOut = math.select(dirInOut, newDir, less);
@@ -443,9 +444,9 @@ namespace ME.ECS.Essentials.Physics
             float3 t2 = Mul(aFromB, triangleB->ConvexHull.Vertices[2]);
 
             float3 direction;
-            sfloat distanceSq;
+            tfloat distanceSq;
             float3 pointCapsule;
-            sfloat sign = 1.0f; // negated if penetrating
+            tfloat sign = 1.0f; // negated if penetrating
             {
                 // Calculate triangle edges and edge planes
                 float3 faceNormal = math.mul(aFromB.Rotation, triangleB->ConvexHull.Planes[0].Normal);
@@ -457,7 +458,7 @@ namespace ME.ECS.Essentials.Physics
                 // c0 against triangle face
                 {
                     FourTransposedPoints rels = new FourTransposedPoints(c0) - vertsB;
-                    PointTriangleFace(c0, t0, faceNormal, vertsB, edgesB, perpsB, rels, out sfloat signedDistance);
+                    PointTriangleFace(c0, t0, faceNormal, vertsB, edgesB, perpsB, rels, out tfloat signedDistance);
                     distanceSq = signedDistance * signedDistance;
                     if (distanceSq > distanceEpsSq)
                     {
@@ -473,8 +474,8 @@ namespace ME.ECS.Essentials.Physics
                 // c1 against triangle face
                 {
                     FourTransposedPoints rels = new FourTransposedPoints(c1) - vertsB;
-                    PointTriangleFace(c1, t0, faceNormal, vertsB, edgesB, perpsB, rels, out sfloat signedDistance);
-                    sfloat distanceSq1 = signedDistance * signedDistance;
+                    PointTriangleFace(c1, t0, faceNormal, vertsB, edgesB, perpsB, rels, out tfloat signedDistance);
+                    tfloat distanceSq1 = signedDistance * signedDistance;
                     float3 direction1;
                     if (distanceSq1 > distanceEpsSq)
                     {
@@ -494,7 +495,7 @@ namespace ME.ECS.Essentials.Physics
                     float3 closestOnCapsule, closestOnTriangle;
                     SegmentSegment(c0, axis, vertsB.GetPoint(i), edgesB.GetPoint(i), out closestOnCapsule, out closestOnTriangle);
                     float3 edgeDiff = closestOnCapsule - closestOnTriangle;
-                    sfloat edgeDistanceSq = math.lengthsq(edgeDiff);
+                    tfloat edgeDistanceSq = math.lengthsq(edgeDiff);
                     edgeDiff = math.select(edgeDiff, perpsB.GetPoint(i), edgeDistanceSq < distanceEpsSq); // use edge plane if the capsule axis intersects the edge
                     SelectMin(ref direction, ref distanceSq, ref pointCapsule, edgeDiff, edgeDistanceSq, closestOnCapsule);
                 }
@@ -502,9 +503,9 @@ namespace ME.ECS.Essentials.Physics
                 // axis against triangle face
                 {
                     // Find the intersection of the axis with the triangle plane
-                    sfloat axisDot = math.dot(axis, faceNormal);
-                    sfloat dist0 = math.dot(t0 - c0, faceNormal); // distance from c0 to the plane along the normal
-                    sfloat t = dist0 * math.select(math.rcp(axisDot), 0.0f, axisDot == 0.0f);
+                    tfloat axisDot = math.dot(axis, faceNormal);
+                    tfloat dist0 = math.dot(t0 - c0, faceNormal); // distance from c0 to the plane along the normal
+                    tfloat t = dist0 * math.select(math.rcp(axisDot), 0.0f, axisDot == 0.0f);
                     if (t > 0.0f && t < 1.0f)
                     {
                         // If they intersect, check if the intersection is inside the triangle
@@ -513,9 +514,9 @@ namespace ME.ECS.Essentials.Physics
                         if (math.all(dots <= float4.zero))
                         {
                             // Axis intersects the triangle, choose the separating direction
-                            sfloat dist1 = axisDot - dist0;
+                            tfloat dist1 = axisDot - dist0;
                             bool use1 = math.abs(dist1) < math.abs(dist0);
-                            sfloat dist = math.select(-dist0, dist1, use1);
+                            tfloat dist = math.select(-dist0, dist1, use1);
                             float3 closestOnCapsule = math.select(c0, c1, use1);
                             SelectMin(ref direction, ref distanceSq, ref pointCapsule, dist * faceNormal, dist * dist, closestOnCapsule);
 
@@ -526,8 +527,8 @@ namespace ME.ECS.Essentials.Physics
                 }
             }
 
-            sfloat invDistance = math.rsqrt(distanceSq);
-            sfloat distance;
+            tfloat invDistance = math.rsqrt(distanceSq);
+            tfloat distance;
             float3 normal;
             if (distanceSq < distanceEpsSq)
             {
@@ -1323,7 +1324,7 @@ namespace ME.ECS.Essentials.Physics
                 };
                 walker = new Terrain.QuadTreeWalker(&terrainCollider->Terrain, queryAabb);
             }
-            sfloat maxDistanceSquared = collector.MaxFraction * collector.MaxFraction;
+            tfloat maxDistanceSquared = collector.MaxFraction * collector.MaxFraction;
 
             D dispatcher = new D();
             dispatcher.Init(input.Transform);
@@ -1378,7 +1379,7 @@ namespace ME.ECS.Essentials.Physics
 
             // Get the point in heightfield space
             float3 position = input.Position * terrain.InverseScale;
-            sfloat maxDistanceSquared = collector.MaxFraction * collector.MaxFraction;
+            tfloat maxDistanceSquared = collector.MaxFraction * collector.MaxFraction;
             Terrain.QuadTreeWalker walker;
             {
                 var queryAabb = new Aabb

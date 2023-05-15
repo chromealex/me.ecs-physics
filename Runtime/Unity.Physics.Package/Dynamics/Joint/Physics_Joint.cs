@@ -3,9 +3,10 @@ using ME.ECS;
 using Unity.Collections;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -26,16 +27,16 @@ namespace ME.ECS.Essentials.Physics
         // The values are huge and we can't get damping = 1 -- a stiff constraint is the limit of a damped spring as spring params go to infinity.
         // Rather then baking them these values could be calculated using
         // JacobianUtilities.CalculateSpringFrequencyAndDamping(0.6f, 0.99f, math.rcp(60.0f), 4, out DefaultSpringFrequency, out DefaultSpringDamping);
-        public static sfloat DefaultSpringFrequency = 74341.31f;
-        public static sfloat DefaultSpringDamping = 2530.126f;
+        public static tfloat DefaultSpringFrequency = 74341.31f;
+        public static tfloat DefaultSpringDamping = 2530.126f;
 
         public bool3 ConstrainedAxes;
         public ConstraintType Type;
 
-        public sfloat Min;
-        public sfloat Max;
-        public sfloat SpringFrequency;
-        public sfloat SpringDamping;
+        public tfloat Min;
+        public tfloat Max;
+        public tfloat SpringFrequency;
+        public tfloat SpringDamping;
 
         // Number of affected degrees of freedom.  1, 2, or 3.
         internal int Dimension
@@ -77,7 +78,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return BallAndSocket(DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint BallAndSocket(sfloat springFrequency, sfloat springDamping)
+        public static Constraint BallAndSocket(tfloat springFrequency, tfloat springDamping)
         {
             return new Constraint
             {
@@ -100,7 +101,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return LimitedDistance(distanceRange, DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint LimitedDistance(FloatRange distanceRange, sfloat springFrequency, sfloat springDamping)
+        public static Constraint LimitedDistance(FloatRange distanceRange, tfloat springFrequency, tfloat springDamping)
         {
             distanceRange = distanceRange.Sorted();
             return new Constraint
@@ -128,7 +129,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return Cylindrical(freeAxis, distanceRange, DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint Cylindrical(int freeAxis, FloatRange distanceRange, sfloat springFrequency, sfloat springDamping)
+        public static Constraint Cylindrical(int freeAxis, FloatRange distanceRange, tfloat springFrequency, tfloat springDamping)
         {
             Assert.IsTrue(freeAxis >= 0 && freeAxis <= 2);
             distanceRange = distanceRange.Sorted();
@@ -157,7 +158,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return Planar(limitedAxis,  distanceRange, DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint Planar(int limitedAxis, FloatRange distanceRange, sfloat springFrequency, sfloat springDamping)
+        public static Constraint Planar(int limitedAxis, FloatRange distanceRange, tfloat springFrequency, tfloat springDamping)
         {
             Assert.IsTrue(limitedAxis >= 0 && limitedAxis <= 2);
             distanceRange = distanceRange.Sorted();
@@ -185,7 +186,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return FixedAngle(DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint FixedAngle(sfloat springFrequency, sfloat springDamping)
+        public static Constraint FixedAngle(tfloat springFrequency, tfloat springDamping)
         {
             return new Constraint
             {
@@ -208,7 +209,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return Hinge(freeAxis, DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint Hinge(int freeAxis, sfloat springFrequency, sfloat springDamping)
+        public static Constraint Hinge(int freeAxis, tfloat springFrequency, tfloat springDamping)
         {
             Assert.IsTrue(freeAxis >= 0 && freeAxis <= 2);
             return new Constraint
@@ -236,7 +237,7 @@ namespace ME.ECS.Essentials.Physics
         {
             return Cone(freeAxis, angularRange, DefaultSpringFrequency, DefaultSpringDamping);
         }
-        public static Constraint Cone(int freeAxis, FloatRange angularRange, sfloat springFrequency, sfloat springDamping)
+        public static Constraint Cone(int freeAxis, FloatRange angularRange, tfloat springFrequency, tfloat springDamping)
         {
             Assert.IsTrue(freeAxis >= 0 && freeAxis <= 2);
             angularRange = angularRange.Sorted();
@@ -263,7 +264,7 @@ namespace ME.ECS.Essentials.Physics
             return Twist(limitedAxis, angularRange, DefaultSpringFrequency, DefaultSpringDamping);
         }
         
-        public static Constraint Twist(int limitedAxis, FloatRange angularRange, sfloat springFrequency, sfloat springDamping)
+        public static Constraint Twist(int limitedAxis, FloatRange angularRange, tfloat springFrequency, tfloat springDamping)
         {
             Assert.IsTrue(limitedAxis >= 0 && limitedAxis <= 2);
             angularRange = angularRange.Sorted();

@@ -7,9 +7,10 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -62,7 +63,7 @@ namespace ME.ECS.Essentials.Physics
                 for (int i = range.Start; i < range.Start + range.Length; ++i)
                 {
                     PointAndIndex value = Points[i];
-                    sfloat key = value.Position[axis];
+                    tfloat key = value.Position[axis];
                     int j = i;
                     while (j > range.Start && key < Points[j - 1].Position[axis])
                     {
@@ -79,7 +80,7 @@ namespace ME.ECS.Essentials.Physics
             /// <param name="range"></param>
             /// <param name="axis"></param>
             /// <param name="pivot"></param>
-            static void ComputeAxisAndPivot(ref Range range, out int axis, out sfloat pivot)
+            static void ComputeAxisAndPivot(ref Range range, out int axis, out tfloat pivot)
             {
                 // Compute axis and pivot.
                 axis = IndexOfMaxComponent(range.Domain.Extents);
@@ -104,7 +105,7 @@ namespace ME.ECS.Essentials.Physics
                 public int SortAxis;
             }
 
-            void ProcessAxis(int rangeLength, int axis, NativeArray<sfloat> scores, NativeArray<float4> points, ref int bestAxis, ref int pivot, ref sfloat minScore)
+            void ProcessAxis(int rangeLength, int axis, NativeArray<tfloat> scores, NativeArray<float4> points, ref int bestAxis, ref int pivot, ref tfloat minScore)
             {
                 CompareVertices comparator;
                 comparator.SortAxis = axis;
@@ -125,7 +126,7 @@ namespace ME.ECS.Essentials.Physics
                 for (int i = rangeLength - 1, j = 1; i > 0; --i, ++j)
                 {
                     runningAabb.Include(Aabbs[p[i].Index]);
-                    sfloat sum = scores[i - 1] + j * runningAabb.SurfaceArea;
+                    tfloat sum = scores[i - 1] + j * runningAabb.SurfaceArea;
                     if (sum < minScore)
                     {
                         pivot = i;
@@ -139,7 +140,7 @@ namespace ME.ECS.Essentials.Physics
             {
                 if (!ScratchScores.IsCreated)
                 {
-                    ScratchScores = new NativeArray<sfloat>(Aabbs.Length, Allocator.Temp);
+                    ScratchScores = new NativeArray<tfloat>(Aabbs.Length, Allocator.Temp);
                     ScratchPointsX = new NativeArray<float4>(Aabbs.Length, Allocator.Temp);
                     ScratchPointsY = new NativeArray<float4>(Aabbs.Length, Allocator.Temp);
                     ScratchPointsZ = new NativeArray<float4>(Aabbs.Length, Allocator.Temp);
@@ -149,7 +150,7 @@ namespace ME.ECS.Essentials.Physics
                 // happens to be Aabbs.length.  If that ever becomes not true then scratch memory size should be increased.
                 Assert.IsTrue(range.Length <= ScratchScores.Length /*, "Aabbs.Length isn't a large enough scratch memory size for SegregateSah3"*/);
 
-                float4* p = PointsAsFloat4 + range.Start;
+                float4* p = PointsAtfloat4 + range.Start;
 
                 for (int i = 0; i < range.Length; i++)
                 {
@@ -159,7 +160,7 @@ namespace ME.ECS.Essentials.Physics
                 }
 
                 int bestAxis = -1, pivot = -1;
-                sfloat minScore = float.MaxValue;
+                tfloat minScore = float.MaxValue;
 
                 ProcessAxis(range.Length, 0, ScratchScores, ScratchPointsX, ref bestAxis, ref pivot, ref minScore);
                 ProcessAxis(range.Length, 1, ScratchScores, ScratchPointsY, ref bestAxis, ref pivot, ref minScore);
@@ -200,14 +201,14 @@ namespace ME.ECS.Essentials.Physics
                 }
             }
 
-            void Segregate(int axis, sfloat pivot, Range range, int minItems, ref Range lRange, ref Range rRange)
+            void Segregate(int axis, tfloat pivot, Range range, int minItems, ref Range lRange, ref Range rRange)
             {
                 Assert.IsTrue(range.Length > 1 /*, "Range length must be greater than 1."*/);
 
                 Aabb lDomain = Aabb.Empty;
                 Aabb rDomain = Aabb.Empty;
 
-                float4* p = PointsAsFloat4;
+                float4* p = PointsAtfloat4;
                 float4* start = p + range.Start;
                 float4* end = start + range.Length - 1;
 
@@ -243,8 +244,8 @@ namespace ME.ECS.Essentials.Physics
                     // Make sure sub-ranges contains at least minItems nodes, in these rare cases (i.e. all points at the same position), we just split the set in half regardless of positions.
                     SplitRange(ref range, range.Length / 2, ref lRange, ref rRange);
 
-                    SetAabbFromPoints(ref lDomain, PointsAsFloat4 + lRange.Start, lRange.Length);
-                    SetAabbFromPoints(ref rDomain, PointsAsFloat4 + rRange.Start, rRange.Length);
+                    SetAabbFromPoints(ref lDomain, PointsAtfloat4 + lRange.Start, lRange.Length);
+                    SetAabbFromPoints(ref rDomain, PointsAtfloat4 + rRange.Start, rRange.Length);
                 }
                 else
                 {
@@ -295,13 +296,13 @@ namespace ME.ECS.Essentials.Physics
 
             Node* GetNode(int nodeIndex) => Bvh.m_Nodes + nodeIndex;
 
-            float4* PointsAsFloat4 => (float4*)Points.GetUnsafePtr();
+            float4* PointsAtfloat4 => (float4*)Points.GetUnsafePtr();
 
             void ProcessSmallRange(Range baseRange, ref int freeNodeIndex)
             {
                 Range range = baseRange;
 
-                ComputeAxisAndPivot(ref range, out int axis, out sfloat pivot);
+                ComputeAxisAndPivot(ref range, out int axis, out tfloat pivot);
                 SortRange(axis, ref range);
 
                 Range* subRanges = stackalloc Range[4];
@@ -339,15 +340,15 @@ namespace ME.ECS.Essentials.Physics
             {
                 if (!UseSah)
                 {
-                    ComputeAxisAndPivot(ref range, out int axis, out sfloat pivot);
+                    ComputeAxisAndPivot(ref range, out int axis, out tfloat pivot);
 
                     Range* temps = stackalloc Range[2];
                     Segregate(axis, pivot, range, 2, ref temps[0], ref temps[1]);
 
-                    ComputeAxisAndPivot(ref temps[0], out int lAxis, out sfloat lPivot);
+                    ComputeAxisAndPivot(ref temps[0], out int lAxis, out tfloat lPivot);
                     Segregate(lAxis, lPivot, temps[0], 1, ref subRanges[0], ref subRanges[1]);
 
-                    ComputeAxisAndPivot(ref temps[1], out int rAxis, out sfloat rPivot);
+                    ComputeAxisAndPivot(ref temps[1], out int rAxis, out tfloat rPivot);
                     Segregate(rAxis, rPivot, temps[1], 1, ref subRanges[2], ref subRanges[3]);
                 }
                 else
@@ -414,7 +415,7 @@ namespace ME.ECS.Essentials.Physics
             public bool UseSah;
 
             // These arrays are only used if SAH is used for BVH building.
-            private NativeArray<sfloat> ScratchScores;
+            private NativeArray<tfloat> ScratchScores;
             private NativeArray<float4> ScratchPointsX;
             private NativeArray<float4> ScratchPointsY;
             private NativeArray<float4> ScratchPointsZ;

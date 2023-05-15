@@ -5,9 +5,10 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -24,7 +25,7 @@ namespace ME.ECS.Essentials.Physics
         private NativeArray<Solver.StabilizationMotionData> m_SolverStabilizationMotionData;
         internal NativeArray<Solver.StabilizationMotionData> SolverStabilizationMotionData => m_SolverStabilizationMotionData.GetSubArray(0, m_NumDynamicBodies);
 
-        internal sfloat TimeStep;
+        internal tfloat TimeStep;
 
         internal NativeArray<Velocity> InputVelocities => m_InputVelocities.GetSubArray(0, m_NumDynamicBodies);
 

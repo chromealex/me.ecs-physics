@@ -4,9 +4,10 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -166,7 +167,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void Geometry_CheckFiniteAndPositiveAndThrow(sfloat value, in FixedString32Bytes paramName, in FixedString32Bytes propertyName)
+        static void Geometry_CheckFiniteAndPositiveAndThrow(tfloat value, in FixedString32Bytes paramName, in FixedString32Bytes propertyName)
         {
             if (value < 0f || !math.isfinite(value))
                 throw new ArgumentException($"{propertyName} {value} is not positive.", $"{paramName}");

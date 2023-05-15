@@ -1,9 +1,10 @@
 using Unity.Collections;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 
@@ -29,19 +30,19 @@ namespace ME.ECS.Essentials.Physics
 
     public static class SimplexSolver
     {
-        static sfloat k_Epsilon = 0.0001f;
+        static tfloat k_Epsilon = 0.0001f;
 
         public static unsafe void Solve(
-            sfloat deltaTime, sfloat minDeltaTime, float3 up, sfloat maxVelocity,
-            NativeList<SurfaceConstraintInfo> constraints, ref float3 position, ref float3 velocity, out sfloat integratedTime, bool useConstraintVelocities = true
+            tfloat deltaTime, tfloat minDeltaTime, float3 up, tfloat maxVelocity,
+            NativeList<SurfaceConstraintInfo> constraints, ref float3 position, ref float3 velocity, out tfloat integratedTime, bool useConstraintVelocities = true
         )
         {
             // List of planes to solve against (up to 4)
             SurfaceConstraintInfo* supportPlanes = stackalloc SurfaceConstraintInfo[4];
             int numSupportPlanes = 0;
 
-            sfloat remainingTime = deltaTime;
-            sfloat currentTime = 0.0f;
+            tfloat remainingTime = deltaTime;
+            tfloat currentTime = 0.0f;
 
             // Clamp the input velocity to max movement speed
             Math.ClampToMaxLength(maxVelocity, ref velocity);
@@ -49,7 +50,7 @@ namespace ME.ECS.Essentials.Physics
             while (remainingTime > 0.0f)
             {
                 int hitIndex = -1;
-                sfloat minCollisionTime = remainingTime;
+                tfloat minCollisionTime = remainingTime;
 
                 // Iterate over constraints and solve them
                 for (int i = 0; i < constraints.Length; i++)
@@ -59,14 +60,14 @@ namespace ME.ECS.Essentials.Physics
                     SurfaceConstraintInfo constraint = constraints[i];
 
                     float3 relVel = velocity - (useConstraintVelocities ? constraint.Velocity : float3.zero);
-                    sfloat relProjVel = -math.dot(relVel, constraint.Plane.Normal);
+                    tfloat relProjVel = -math.dot(relVel, constraint.Plane.Normal);
                     if (relProjVel < k_Epsilon)
                     {
                         continue;
                     }
 
                     // Clamp distance to 0, since penetration is handled by constraint.Velocity already
-                    sfloat distance = math.max(constraint.Plane.Distance, 0.0f);
+                    tfloat distance = math.max(constraint.Plane.Distance, 0.0f);
                     if (distance < minCollisionTime * relProjVel)
                     {
                         minCollisionTime = distance / relProjVel;
@@ -234,7 +235,7 @@ namespace ME.ECS.Essentials.Physics
         {
             float3 groundVelocity = constraint.Velocity;
             float3 relVel = velocity - groundVelocity;
-            sfloat planeVel = math.dot(relVel, constraint.Plane.Normal);
+            tfloat planeVel = math.dot(relVel, constraint.Plane.Normal);
             relVel -= planeVel * constraint.Plane.Normal;
 
             velocity = relVel + groundVelocity;
@@ -243,7 +244,7 @@ namespace ME.ECS.Essentials.Physics
         public static bool Test1d(SurfaceConstraintInfo constraint, float3 velocity)
         {
             float3 relVel = velocity - constraint.Velocity;
-            sfloat planeVel = math.dot(relVel, constraint.Plane.Normal);
+            tfloat planeVel = math.dot(relVel, constraint.Plane.Normal);
             return planeVel < -k_Epsilon;
         }
 
@@ -254,7 +255,7 @@ namespace ME.ECS.Essentials.Physics
 
             // Calculate the free axis
             float3 axis = math.cross(plane0, plane1);
-            sfloat axisLen2 = math.lengthsq(axis);
+            tfloat axisLen2 = math.lengthsq(axis);
 
             // Check for parallel planes
             if (axisLen2 < k_Epsilon)
@@ -267,7 +268,7 @@ namespace ME.ECS.Essentials.Physics
                 return;
             }
 
-            sfloat invAxisLen = math.rsqrt(axisLen2);
+            tfloat invAxisLen = math.rsqrt(axisLen2);
             axis *= invAxisLen;
 
             // Calculate the velocity of the free axis
@@ -295,9 +296,9 @@ namespace ME.ECS.Essentials.Physics
             float3 groundVelocity = axisVel;
             float3 relVel = velocity - groundVelocity;
 
-            sfloat vel2 = math.lengthsq(relVel);
-            sfloat axisVert = math.dot(up, axis);
-            sfloat axisProjVel = math.dot(relVel, axis);
+            tfloat vel2 = math.lengthsq(relVel);
+            tfloat axisVert = math.dot(up, axis);
+            tfloat axisProjVel = math.dot(relVel, axis);
 
             velocity = groundVelocity + axis * axisProjVel;
         }
@@ -317,8 +318,8 @@ namespace ME.ECS.Essentials.Physics
             m.c2 = new float4(r2, 0.0f);
             m.c3 = new float4(0.0f, 0.0f, 0.0f, 1.0f);
 
-            sfloat det = math.dot(r0, plane0);
-            sfloat tst = math.abs(det);
+            tfloat det = math.dot(r0, plane0);
+            tfloat tst = math.abs(det);
             if (tst < k_Epsilon)
             {
                 Sort3d(ref constraint0, ref constraint1, ref constraint2);

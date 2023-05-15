@@ -3,9 +3,10 @@ using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -21,8 +22,8 @@ namespace ME.ECS.Essentials.Physics
             public byte NumVertices;             // number of vertex indices in the FaceVertexIndices array
             public byte MinHalfAngleCompressed;  // 0-255 = 0-90 degrees
 
-            static sfloat k_CompressionFactor = 255.0f / (math.PI * 0.5f);
-            public sfloat MinHalfAngle { set => MinHalfAngleCompressed = (byte)math.min(value * k_CompressionFactor, 255); }
+            static tfloat k_CompressionFactor = 255.0f / (math.PI * 0.5f);
+            public tfloat MinHalfAngle { set => MinHalfAngleCompressed = (byte)math.min(value * k_CompressionFactor, 255); }
             public bool Equals(Face other) => FirstIndex.Equals(other.FirstIndex) && NumVertices.Equals(other.NumVertices) && MinHalfAngleCompressed.Equals(other.MinHalfAngleCompressed);
         }
 
@@ -42,7 +43,7 @@ namespace ME.ECS.Essentials.Physics
         // For spheres and capsules, this is the radius of the primitive.
         // For other convex hulls, this is typically a small value.
         // For polygons in a static mesh, this is typically zero.
-        public sfloat ConvexRadius;
+        public tfloat ConvexRadius;
 
         // Relative arrays of convex hull data
         internal BlobArray VerticesBlob;
@@ -70,10 +71,10 @@ namespace ME.ECS.Essentials.Physics
         public int GetSupportingFace(float3 direction)
         {
             int bestIndex = 0;
-            sfloat bestDot = math.dot(direction, Planes[0].Normal);
+            tfloat bestDot = math.dot(direction, Planes[0].Normal);
             for (int i = 1; i < NumFaces; i++)
             {
-                sfloat dot = math.dot(direction, Planes[i].Normal);
+                tfloat dot = math.dot(direction, Planes[i].Normal);
                 if (dot > bestDot)
                 {
                     bestDot = dot;
@@ -96,7 +97,7 @@ namespace ME.ECS.Essentials.Physics
             // Search the edges that contain supportingVertexIndex for the one that is most perpendicular to direction
             int bestEdgeIndex = -1;
             {
-                sfloat bestEdgeDot = float.MaxValue;
+                tfloat bestEdgeDot = float.MaxValue;
                 float3 supportingVertex = Vertices[supportingVertexIndex];
                 Edge edge = VertexEdges[supportingVertexIndex];
                 int firstFaceIndex = edge.FaceIndex;
@@ -109,7 +110,7 @@ namespace ME.ECS.Essentials.Physics
                     face = Faces[edge.FaceIndex];
                     float3 linkedVertex = Vertices[FaceVertexIndices[face.FirstIndex + edge.EdgeIndex]];
                     float3 edgeDirection = linkedVertex - supportingVertex;
-                    sfloat dot = math.abs(math.dot(direction, edgeDirection)) * math.rsqrt(math.lengthsq(edgeDirection));
+                    tfloat dot = math.abs(math.dot(direction, edgeDirection)) * math.rsqrt(math.lengthsq(edgeDirection));
                     bestEdgeIndex = math.select(bestEdgeIndex, linkedEdgeIndex, dot < bestEdgeDot);
                     bestEdgeDot = math.min(bestEdgeDot, dot);
 
@@ -135,14 +136,14 @@ namespace ME.ECS.Essentials.Physics
             return math.select(faceIndex0, faceIndex1, math.dot(direction, normal1) > math.dot(direction, normal0));
         }
 
-        internal sfloat CalculateBoundingRadius(float3 pivot)
+        internal tfloat CalculateBoundingRadius(float3 pivot)
         {
             // Find the furthest point from the pivot
-            sfloat maxDistanceSq = 0;
+            tfloat maxDistanceSq = 0;
             for (int i = 0; i < NumVertices; i++)
             {
                 float3 vertex = Vertices[i].xyz;
-                sfloat distanceSq = math.lengthsq(vertex - pivot);
+                tfloat distanceSq = math.lengthsq(vertex - pivot);
                 maxDistanceSq = math.max(maxDistanceSq, distanceSq);
             }
             return math.sqrt(maxDistanceSq) + ConvexRadius;

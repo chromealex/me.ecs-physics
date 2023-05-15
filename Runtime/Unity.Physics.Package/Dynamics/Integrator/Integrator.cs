@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -14,7 +15,7 @@ namespace ME.ECS.Essentials.Physics
     public static class Integrator
     {
         // Integrate the world's motions forward by the given time step.
-        public static void Integrate(NativeArray<MotionData> motionDatas, NativeArray<MotionVelocity> motionVelocities, sfloat timeStep)
+        public static void Integrate(NativeArray<MotionData> motionDatas, NativeArray<MotionVelocity> motionVelocities, tfloat timeStep)
         {
             for (int i = 0; i < motionDatas.Length; i++)
             {
@@ -23,7 +24,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Integrate a single transform for the provided velocity and time
-        public static void Integrate(ref RigidTransform transform, in MotionVelocity motionVelocity, in sfloat timeStep)
+        public static void Integrate(ref RigidTransform transform, in MotionVelocity motionVelocity, in tfloat timeStep)
         {
             // center of mass
             IntegratePosition(ref transform.pos, motionVelocity.LinearVelocity, timeStep);
@@ -33,7 +34,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Schedule a job to integrate the world's motions forward by the given time step.
-        internal static JobHandle ScheduleIntegrateJobs(ref DynamicsWorld world, sfloat timeStep, JobHandle inputDeps, bool multiThreaded = true)
+        internal static JobHandle ScheduleIntegrateJobs(ref DynamicsWorld world, tfloat timeStep, JobHandle inputDeps, bool multiThreaded = true)
         {
             if (!multiThreaded)
             {
@@ -62,14 +63,14 @@ namespace ME.ECS.Essentials.Physics
         {
             public NativeArray<MotionData> MotionDatas;
             public NativeArray<MotionVelocity> MotionVelocities;
-            public sfloat TimeStep;
+            public tfloat TimeStep;
 
             public void Execute(int i)
             {
                 ExecuteImpl(i, MotionDatas, MotionVelocities, TimeStep);
             }
 
-            internal static void ExecuteImpl(int i, NativeArray<MotionData> motionDatas, NativeArray<MotionVelocity> motionVelocities, sfloat timeStep)
+            internal static void ExecuteImpl(int i, NativeArray<MotionData> motionDatas, NativeArray<MotionVelocity> motionVelocities, tfloat timeStep)
             {
                 MotionData motionData = motionDatas[i];
                 MotionVelocity motionVelocity = motionVelocities[i];
@@ -95,7 +96,7 @@ namespace ME.ECS.Essentials.Physics
         {
             public NativeArray<MotionData> MotionDatas;
             public NativeArray<MotionVelocity> MotionVelocities;
-            public sfloat TimeStep;
+            public tfloat TimeStep;
 
             public void Execute()
             {
@@ -104,13 +105,13 @@ namespace ME.ECS.Essentials.Physics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void IntegratePosition(ref float3 position, float3 linearVelocity, sfloat timestep)
+        internal static void IntegratePosition(ref float3 position, float3 linearVelocity, tfloat timestep)
         {
             position += linearVelocity * timestep;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void IntegrateOrientation(ref quaternion orientation, float3 angularVelocity, sfloat timestep)
+        internal static void IntegrateOrientation(ref quaternion orientation, float3 angularVelocity, tfloat timestep)
         {
             quaternion dq = IntegrateAngularVelocity(angularVelocity, timestep);
             quaternion r = math.mul(orientation, dq);
@@ -118,7 +119,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Returns a non-normalized quaternion that approximates the change in angle angularVelocity * timestep.
-        internal static quaternion IntegrateAngularVelocity(float3 angularVelocity, sfloat timestep)
+        internal static quaternion IntegrateAngularVelocity(float3 angularVelocity, tfloat timestep)
         {
             float3 halfDeltaTime = new float3(timestep * 0.5f);
             float3 halfDeltaAngle = angularVelocity * halfDeltaTime;

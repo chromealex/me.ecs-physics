@@ -8,9 +8,10 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.BoundingVolumeHierarchy;
@@ -74,9 +75,9 @@ namespace ME.ECS.Essentials.Physics
         /// Build the broadphase based on the given world.
         /// </summary>
         public void Build(NativeArray<RigidBody> staticBodies, NativeArray<RigidBody> dynamicBodies,
-            NativeArray<MotionVelocity> motionVelocities, sfloat collisionTolerance, sfloat timeStep, float3 gravity, bool buildStaticTree = true)
+            NativeArray<MotionVelocity> motionVelocities, tfloat collisionTolerance, tfloat timeStep, float3 gravity, bool buildStaticTree = true)
         {
-            sfloat aabbMargin = collisionTolerance * 0.5f; // each body contributes half
+            tfloat aabbMargin = collisionTolerance * 0.5f; // each body contributes half
 
             if (buildStaticTree)
             {
@@ -91,7 +92,7 @@ namespace ME.ECS.Essentials.Physics
         /// <summary>
         /// Build the static tree of the broadphase based on the given array of rigid bodies.
         /// </summary>
-        public void BuildStaticTree(NativeArray<RigidBody> staticBodies, sfloat aabbMargin)
+        public void BuildStaticTree(NativeArray<RigidBody> staticBodies, tfloat aabbMargin)
         {
             Assert.AreEqual(staticBodies.Length, m_StaticTree.NumBodies);
 
@@ -119,7 +120,7 @@ namespace ME.ECS.Essentials.Physics
         /// Build the dynamic tree of the broadphase based on the given array of rigid bodies and motions.
         /// </summary>
         public void BuildDynamicTree(NativeArray<RigidBody> dynamicBodies,
-            NativeArray<MotionVelocity> motionVelocities, float3 gravity, sfloat timeStep, sfloat aabbMargin)
+            NativeArray<MotionVelocity> motionVelocities, float3 gravity, tfloat timeStep, tfloat aabbMargin)
         {
             Assert.AreEqual(dynamicBodies.Length, m_DynamicTree.NumBodies);
 
@@ -147,7 +148,7 @@ namespace ME.ECS.Essentials.Physics
         /// <summary>
         /// Schedule a set of jobs to build the broadphase based on the given world.
         /// </summary>
-        public JobHandle ScheduleBuildJobs(ref PhysicsWorld world, sfloat timeStep, float3 gravity, NativeArray<int> buildStaticTree, JobHandle inputDeps, bool multiThreaded = true)
+        public JobHandle ScheduleBuildJobs(ref PhysicsWorld world, tfloat timeStep, float3 gravity, NativeArray<int> buildStaticTree, JobHandle inputDeps, bool multiThreaded = true)
         {
             if (!multiThreaded)
             {
@@ -217,7 +218,7 @@ namespace ME.ECS.Essentials.Physics
         /// Schedule a set of jobs to build the dynamic tree of the broadphase based on the given world.
         /// </summary>
         public JobHandle ScheduleDynamicTreeBuildJobs(
-            ref PhysicsWorld world, sfloat timeStep, float3 gravity, int numThreadsHint, JobHandle inputDeps)
+            ref PhysicsWorld world, tfloat timeStep, float3 gravity, int numThreadsHint, JobHandle inputDeps)
         {
             Assert.AreEqual(world.NumDynamicBodies, m_DynamicTree.NumBodies);
             if (world.NumDynamicBodies == 0)
@@ -686,8 +687,8 @@ namespace ME.ECS.Essentials.Physics
             [ReadOnly] public NativeArray<RigidBody> StaticBodies;
             [ReadOnly] public NativeArray<RigidBody> DynamicBodies;
             [ReadOnly] public NativeArray<MotionVelocity> MotionVelocities;
-            [ReadOnly] public sfloat CollisionTolerance;
-            [ReadOnly] public sfloat TimeStep;
+            [ReadOnly] public tfloat CollisionTolerance;
+            [ReadOnly] public tfloat TimeStep;
             [ReadOnly] public float3 Gravity;
             [ReadOnly] public NativeArray<int> BuildStaticTree;
 
@@ -739,9 +740,9 @@ namespace ME.ECS.Essentials.Physics
         {
             [ReadOnly] public NativeArray<RigidBody> RigidBodies;
             [ReadOnly] public NativeArray<MotionVelocity> MotionVelocities;
-            [ReadOnly] public sfloat TimeStep;
+            [ReadOnly] public tfloat TimeStep;
             [ReadOnly] public float3 Gravity;
-            [ReadOnly] public sfloat AabbMargin;
+            [ReadOnly] public tfloat AabbMargin;
 
             public NativeArray<PointAndIndex> Points;
             public NativeArray<Aabb> Aabbs;
@@ -753,7 +754,7 @@ namespace ME.ECS.Essentials.Physics
                 ExecuteImpl(index, AabbMargin, Gravity, TimeStep, RigidBodies, MotionVelocities, Aabbs, Points, FiltersOut, RespondsToCollisionOut);
             }
 
-            internal static unsafe void ExecuteImpl(int index, sfloat aabbMargin, float3 gravity, sfloat timeStep,
+            internal static unsafe void ExecuteImpl(int index, tfloat aabbMargin, float3 gravity, tfloat timeStep,
                 NativeArray<RigidBody> rigidBodies, NativeArray<MotionVelocity> motionVelocities,
                 NativeArray<Aabb> aabbs, NativeArray<PointAndIndex> points,
                 NativeArray<CollisionFilter> filtersOut, NativeArray<bool> respondsToCollisionOut)
@@ -820,7 +821,7 @@ namespace ME.ECS.Essentials.Physics
         struct PrepareStaticBodyDataJob : IJobParallelForDefer
         {
             [ReadOnly] public NativeArray<RigidBody> RigidBodies;
-            [ReadOnly] public sfloat AabbMargin;
+            [ReadOnly] public tfloat AabbMargin;
 
             public NativeArray<Aabb> Aabbs;
             public NativeArray<PointAndIndex> Points;
@@ -832,7 +833,7 @@ namespace ME.ECS.Essentials.Physics
                 ExecuteImpl(index, AabbMargin, RigidBodies, Aabbs, Points, FiltersOut, RespondsToCollisionOut);
             }
 
-            internal static unsafe void ExecuteImpl(int index, sfloat aabbMargin,
+            internal static unsafe void ExecuteImpl(int index, tfloat aabbMargin,
                 NativeArray<RigidBody> rigidBodies, NativeArray<Aabb> aabbs, NativeArray<PointAndIndex> points,
                 NativeArray<CollisionFilter> filtersOut, NativeArray<bool> respondsToCollisionOut)
             {

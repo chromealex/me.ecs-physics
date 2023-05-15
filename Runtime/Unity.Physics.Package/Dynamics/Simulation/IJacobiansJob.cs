@@ -6,9 +6,10 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -118,7 +119,7 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public sfloat CoefficientOfFriction
+        public tfloat CoefficientOfFriction
         {
             get => m_ContactJacobian->CoefficientOfFriction;
             set

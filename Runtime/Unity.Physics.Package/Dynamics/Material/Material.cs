@@ -1,9 +1,10 @@
 using System;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 
@@ -39,8 +40,8 @@ namespace ME.ECS.Essentials.Physics
         public CombinePolicy FrictionCombinePolicy;
         public CombinePolicy RestitutionCombinePolicy;
         public byte CustomTags;
-        public sfloat Friction;
-        public sfloat Restitution;
+        public tfloat Friction;
+        public tfloat Restitution;
 
         public CollisionResponsePolicy CollisionResponse
         {
@@ -165,7 +166,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Get a combined friction value for a pair of materials.
         // The combine policy with the highest value takes priority.
-        public static sfloat GetCombinedFriction(Material materialA, Material materialB)
+        public static tfloat GetCombinedFriction(Material materialA, Material materialB)
         {
             var policy = (CombinePolicy)math.max((int)materialA.FrictionCombinePolicy, (int)materialB.FrictionCombinePolicy);
             switch (policy)
@@ -185,7 +186,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Get a combined restitution value for a pair of materials.
         // The combine policy with the highest value takes priority.
-        public static sfloat GetCombinedRestitution(Material materialA, Material materialB)
+        public static tfloat GetCombinedRestitution(Material materialA, Material materialB)
         {
             var policy = (CombinePolicy)math.max((int)materialA.RestitutionCombinePolicy, (int)materialB.RestitutionCombinePolicy);
             switch (policy)

@@ -3,9 +3,10 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -25,7 +26,7 @@ namespace ME.ECS.Essentials.Physics
         // Create an empty, invalid AABB
         public static readonly Aabb Empty = new Aabb { Min = Math.Constants.Max3F, Max = Math.Constants.Min3F };
 
-        public sfloat SurfaceArea
+        public tfloat SurfaceArea
         {
             get
             {
@@ -67,7 +68,7 @@ namespace ME.ECS.Essentials.Physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(Aabb aabb) => math.all((Min <= aabb.Min) & (Max >= aabb.Max));
 
-        public void Expand(sfloat distance)
+        public void Expand(tfloat distance)
         {
             Min -= distance;
             Max += distance;

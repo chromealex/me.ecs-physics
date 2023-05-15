@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -17,7 +18,7 @@ namespace ME.ECS.Essentials.Physics
     {
         // For casts this is fraction of the query at which the hit occurred.
         // For distance queries, this is a distance from the query object
-        sfloat Fraction { get; }
+        tfloat Fraction { get; }
 
         // Index of the hit body in the CollisionWorld's rigid body array
         int RigidBodyIndex { get; }
@@ -83,7 +84,7 @@ namespace ME.ECS.Essentials.Physics
         // The maximum fraction of the query within which to check for hits
         // For casts, this is a fraction along the ray
         // For distance queries, this is a distance from the query object
-        sfloat MaxFraction { get; }
+        tfloat MaxFraction { get; }
 
         // The number of hits that have been collected
         int NumHits { get; }
@@ -97,10 +98,10 @@ namespace ME.ECS.Essentials.Physics
     public struct AnyHitCollector<T> : ICollector<T> where T : struct, IQueryResult
     {
         public bool EarlyOutOnFirstHit => true;
-        public sfloat MaxFraction { get; }
+        public tfloat MaxFraction { get; }
         public int NumHits => 0;
 
-        public AnyHitCollector(sfloat maxFraction)
+        public AnyHitCollector(tfloat maxFraction)
         {
             MaxFraction = maxFraction;
         }
@@ -120,13 +121,13 @@ namespace ME.ECS.Essentials.Physics
     public struct ClosestHitCollector<T> : ICollector<T> where T : struct, IQueryResult
     {
         public bool EarlyOutOnFirstHit => false;
-        public sfloat MaxFraction { get; private set; }
+        public tfloat MaxFraction { get; private set; }
         public int NumHits { get; private set; }
 
         private T m_ClosestHit;
         public T ClosestHit => m_ClosestHit;
 
-        public ClosestHitCollector(sfloat maxFraction)
+        public ClosestHitCollector(tfloat maxFraction)
         {
             MaxFraction = maxFraction;
             m_ClosestHit = default(T);
@@ -151,12 +152,12 @@ namespace ME.ECS.Essentials.Physics
     public struct AllHitsCollector<T> : ICollector<T> where T : unmanaged, IQueryResult
     {
         public bool EarlyOutOnFirstHit => false;
-        public sfloat MaxFraction { get; }
+        public tfloat MaxFraction { get; }
         public int NumHits => AllHits.Length;
 
         public NativeList<T> AllHits;
 
-        public AllHitsCollector(sfloat maxFraction, ref NativeList<T> allHits)
+        public AllHitsCollector(tfloat maxFraction, ref NativeList<T> allHits)
         {
             MaxFraction = maxFraction;
             AllHits = allHits;
@@ -183,7 +184,7 @@ namespace ME.ECS.Essentials.Physics
         where C : struct, ICollector<T>
     {
         public bool EarlyOutOnFirstHit => Collector.EarlyOutOnFirstHit;
-        public sfloat MaxFraction => Collector.MaxFraction;
+        public tfloat MaxFraction => Collector.MaxFraction;
         public int NumHits => Collector.NumHits;
 
         // Todo: have a QueryInteraction field here, and filter differently based on it in AddHit()
@@ -220,7 +221,7 @@ namespace ME.ECS.Essentials.Physics
         where C : struct, ICollector<ColliderCastHit>
     {
         public bool EarlyOutOnFirstHit => Collector.EarlyOutOnFirstHit;
-        public sfloat MaxFraction => Collector.MaxFraction;
+        public tfloat MaxFraction => Collector.MaxFraction;
         public int NumHits => Collector.NumHits;
 
         public ref C Collector
@@ -267,7 +268,7 @@ namespace ME.ECS.Essentials.Physics
         where C : struct, ICollector<DistanceHit>
     {
         public bool EarlyOutOnFirstHit => Collector.EarlyOutOnFirstHit;
-        public sfloat MaxFraction => Collector.MaxFraction;
+        public tfloat MaxFraction => Collector.MaxFraction;
         public int NumHits => Collector.NumHits;
 
         public ref C Collector

@@ -6,9 +6,10 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 

@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -37,12 +38,12 @@ namespace ME.ECS.Essentials.Physics
         public MassDistribution MassDistribution;
 
         // The volume of the object.
-        public sfloat Volume;
+        public tfloat Volume;
 
         // Upper bound on the rate of change of the object's extent in any direction,
         // with respect to angular speed around its center of mass.
         // Used to determine how much to expand a rigid body's AABB to enclose its swept volume.
-        public sfloat AngularExpansionFactor;
+        public tfloat AngularExpansionFactor;
 
         // The mass properties of a unit sphere
         public static readonly MassProperties UnitSphere = new MassProperties
@@ -67,8 +68,8 @@ namespace ME.ECS.Essentials.Physics
         public RigidTransform BodyFromMotion;
 
         // Damping applied to the motion during each simulation step
-        public sfloat LinearDamping;
-        public sfloat AngularDamping;
+        public tfloat LinearDamping;
+        public tfloat AngularDamping;
 
         public static readonly MotionData Zero = new MotionData
         {
@@ -85,11 +86,11 @@ namespace ME.ECS.Essentials.Physics
         public float3 LinearVelocity;   // world space
         public float3 AngularVelocity;  // motion space
         public float3 InverseInertia;
-        public sfloat InverseMass;
-        public sfloat AngularExpansionFactor;
+        public tfloat InverseMass;
+        public tfloat AngularExpansionFactor;
 
         // A multiplier applied to the simulation step's gravity vector
-        public sfloat GravityFactor;
+        public tfloat GravityFactor;
 
         public bool HasInfiniteMass => InverseMass == 0.0f;
         public bool HasInfiniteInertia => !math.any(InverseInertia);
@@ -121,7 +122,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Calculate the distances by which to expand collision tolerances based on the speed of the object.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal MotionExpansion CalculateExpansion(sfloat timeStep) => new MotionExpansion
+        internal MotionExpansion CalculateExpansion(tfloat timeStep) => new MotionExpansion
         {
             Linear = LinearVelocity * timeStep,
             // math.length(AngularVelocity) * timeStep is conservative approximation of sin((math.length(AngularVelocity) * timeStep)
@@ -134,9 +135,9 @@ namespace ME.ECS.Essentials.Physics
     struct MotionExpansion
     {
         public float3 Linear;   // how far to look ahead of the object
-        public sfloat Uniform;   // how far to look around the object
+        public tfloat Uniform;   // how far to look around the object
 
-        public sfloat MaxDistance => math.length(Linear) + Uniform;
+        public tfloat MaxDistance => math.length(Linear) + Uniform;
 
         public static readonly MotionExpansion Zero = new MotionExpansion
         {

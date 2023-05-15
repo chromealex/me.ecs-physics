@@ -2,9 +2,10 @@ using System;
 using System.Runtime.CompilerServices;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -66,7 +67,7 @@ namespace ME.ECS.Essentials.Physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static float3 OrthoNormalVectorFast(float3 n)
         {
-            sfloat kRcpSqrt2 = 0.7071067811865475244008443621048490f;
+            tfloat kRcpSqrt2 = 0.7071067811865475244008443621048490f;
             var usePlaneYZ = math.abs(n.z) > kRcpSqrt2;
             var a = math.select(math.dot(n.xy, n.xy), math.dot(n.yz, n.yz), usePlaneYZ);
             var k = math.rcp(math.sqrt(a));
@@ -77,7 +78,7 @@ namespace ME.ECS.Essentials.Physics
         {
             // TODO: math.orthonormalize() does not guarantee an ortho-normalized result when Axis is non-normalized
             var sqrMag = math.lengthsq(Axis);
-            sfloat kEpsilon = Math.Constants.UnityEpsilon;
+            tfloat kEpsilon = Math.Constants.UnityEpsilon;
             return sqrMag >= 1f - kEpsilon && sqrMag <= 1f + kEpsilon
                 ? math.orthonormalize(new float3x3(Axis, PerpendicularAxis, default))
                 : OrthoNormalize(Axis, PerpendicularAxis);

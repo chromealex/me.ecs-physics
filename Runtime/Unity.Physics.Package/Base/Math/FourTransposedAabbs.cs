@@ -1,8 +1,9 @@
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -138,7 +139,7 @@ namespace ME.ECS.Essentials.Physics
             return px * px + py * py + pz * pz;
         }
 
-        public bool4 Raycast(Ray ray, sfloat maxFraction, out float4 fractions)
+        public bool4 Raycast(Ray ray, tfloat maxFraction, out float4 fractions)
         {
             float4 lx = Lx - new float4(ray.Origin.x);
             float4 hx = Hx - new float4(ray.Origin.x);

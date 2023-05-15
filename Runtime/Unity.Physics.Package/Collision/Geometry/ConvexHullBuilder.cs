@@ -9,9 +9,10 @@ using static ME.ECS.Essentials.Physics.Math;
 using Unity.Burst;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -84,7 +85,7 @@ namespace ME.ECS.Essentials.Physics
         private Aabb m_IntegerSpaceAabb;
         private uint m_NextUid;
 
-        private static sfloat k_PlaneEps = 1e-4f;  // Maximum distance any vertex in a face can be from the plane
+        private static tfloat k_PlaneEps = 1e-4f;  // Maximum distance any vertex in a face can be from the plane
 
         /// <summary>
         /// Convex hull vertex.
@@ -199,8 +200,8 @@ namespace ME.ECS.Essentials.Physics
         {
             public float3 CenterOfMass;
             public float3x3 InertiaTensor;
-            public sfloat SurfaceArea;
-            public sfloat Volume;
+            public tfloat SurfaceArea;
+            public tfloat Volume;
         }
 
         /// <summary>
@@ -210,12 +211,12 @@ namespace ME.ECS.Essentials.Physics
         {
             // int * Scale + Offset = float
             public readonly float3 Offset;
-            public readonly sfloat Scale;
-            public readonly sfloat InvScale;
+            public readonly tfloat Scale;
+            public readonly tfloat InvScale;
 
             public IntegerSpace(Aabb aabb, int resolution)
             {
-                sfloat extent = math.cmax(aabb.Extents);
+                tfloat extent = math.cmax(aabb.Extents);
                 Scale = extent / resolution;
                 InvScale = math.select(resolution / extent, 0, extent <= 0);
                 Offset = aabb.Center - (extent / 2);
@@ -233,7 +234,7 @@ namespace ME.ECS.Essentials.Physics
         // domain is the AABB of all points that will be added to the hull
         // simplificationTolerance is the sum of tolerances that will be passed to SimplifyVertices() and SimplifyFacesAndShrink()
         public unsafe ConvexHullBuilder(int verticesCapacity, Vertex* vertices, Triangle* triangles, Plane* planes,
-                                        Aabb domain, sfloat simplificationTolerance, IntResolution intResolution)
+                                        Aabb domain, tfloat simplificationTolerance, IntResolution intResolution)
         {
             m_Vertices = new ElementPoolBase(vertices, verticesCapacity);
             m_Triangles = new ElementPoolBase(triangles, 2 * verticesCapacity);
@@ -252,8 +253,8 @@ namespace ME.ECS.Essentials.Physics
             // Add some margin for error to the domain.  This loses some quantization resolution and therefore some accuracy, but it's possible that
             // SimplifyVertices and SimplifyFacesAndMerge will not stay perfectly within the requested error limits, and expanding the limits avoids
             // clipping against the domain AABB in AddPoint
-            sfloat constantMargin = 0.01f;
-            sfloat linearMargin = 0.1f;
+            tfloat constantMargin = 0.01f;
+            tfloat linearMargin = 0.1f;
             domain.Expand(math.max(simplificationTolerance * 2, constantMargin));
             domain.Expand(math.cmax(domain.Extents) * linearMargin);
             m_IntegerSpaceAabb = domain;
@@ -368,7 +369,7 @@ namespace ME.ECS.Essentials.Physics
                 // 0 dimensional hull, make a line.
                 case 0:
                 {
-                    sfloat minDistanceFromPoint = 1e-5f;
+                    tfloat minDistanceFromPoint = 1e-5f;
                     if (math.lengthsq(Vertices[0].Position - point) <= minDistanceFromPoint * minDistanceFromPoint) return false;
                     AllocateVertex(point, userData);
                     Dimension = 1;
@@ -531,7 +532,7 @@ namespace ME.ECS.Essentials.Physics
                     int firstFrontTriangleIndex = -1, numFrontTriangles = 0, numBackTriangles = 0;
                     int lastFrontTriangleIndex = -1;
                     float3 floatPoint = m_IntegerSpace.ToFloatSpace(intPoint);
-                    sfloat maxDistance = 0.0f;
+                    tfloat maxDistance = 0.0f;
                     foreach (int triangleIndex in Triangles.Indices)
                     {
                         Triangle triangle = Triangles[triangleIndex];
@@ -556,7 +557,7 @@ namespace ME.ECS.Essentials.Physics
                             numFrontTriangles++;
 
                             Plane plane = ComputePlane(triangleIndex, true);
-                            sfloat distance = math.dot(plane.Normal, floatPoint) + plane.Distance;
+                            tfloat distance = math.dot(plane.Normal, floatPoint) + plane.Distance;
                             maxDistance = math.max(distance, maxDistance);
                         }
                         else
@@ -682,8 +683,8 @@ namespace ME.ECS.Essentials.Physics
         // Helper to sort triangles in BuildFaceIndices
         unsafe struct CompareAreaDescending : IComparer<int>
         {
-            public NativeArray<sfloat> Areas;
-            public CompareAreaDescending(NativeArray<sfloat> areas) { Areas = areas; }
+            public NativeArray<tfloat> Areas;
+            public CompareAreaDescending(NativeArray<tfloat> areas) { Areas = areas; }
             public int Compare(int x, int y)
             {
                 return Areas[y].CompareTo(Areas[x]);
@@ -693,7 +694,7 @@ namespace ME.ECS.Essentials.Physics
         // Set the face index for each triangle. Triangles lying in the same plane will have the same face index.
         public void BuildFaceIndices(NativeArray<Plane> planes = default)
         {
-            sfloat convexEps = 1e-5f; // Maximum error allowed in face convexity
+            tfloat convexEps = 1e-5f; // Maximum error allowed in face convexity
 
             NumFaces = 0;
             NumFaceVertices = 0;
@@ -715,7 +716,7 @@ namespace ME.ECS.Essentials.Physics
                 {
                     // Make a compact list of triangles and their areas
                     NativeArray<int> triangleIndices = new NativeArray<int>(Triangles.PeakCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-                    NativeArray<sfloat> triangleAreas = new NativeArray<sfloat>(Triangles.PeakCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+                    NativeArray<tfloat> triangleAreas = new NativeArray<tfloat>(Triangles.PeakCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
                     int numTriangles = 0;
                     foreach (int triangleIndex in Triangles.Indices)
                     {
@@ -758,7 +759,7 @@ namespace ME.ECS.Essentials.Physics
                         int bestPlane = -1;
                         if (planes != null)
                         {
-                            sfloat bestError = k_PlaneEps;
+                            tfloat bestError = k_PlaneEps;
                             float3 a = Vertices[t.Vertex0].Position;
                             float3 b = Vertices[t.Vertex1].Position;
                             float3 c = Vertices[t.Vertex2].Position;
@@ -767,7 +768,7 @@ namespace ME.ECS.Essentials.Physics
                                 if (planesUsed[i]) continue;
                                 Plane currentPlane = planes[i];
                                 float3 errors = new float3(currentPlane.SignedDistanceToPoint(a), currentPlane.SignedDistanceToPoint(b), currentPlane.SignedDistanceToPoint(c));
-                                sfloat error = math.cmax(math.abs(errors));
+                                tfloat error = math.cmax(math.abs(errors));
                                 if (error < bestError)
                                 {
                                     bestError = error;
@@ -797,7 +798,7 @@ namespace ME.ECS.Essentials.Physics
                         while (true)
                         {
                             int openBoundaryEdgeIndex = -1;
-                            sfloat maxArea = -1;
+                            tfloat maxArea = -1;
 
                             for (int i = 0; i < numBoundaryEdges; ++i)
                             {
@@ -829,7 +830,7 @@ namespace ME.ECS.Essentials.Physics
                                 for (int j = 1; accept && j < (numBoundaryEdges - 1); ++j)
                                 {
                                     float3 x = Vertices[EndVertex(boundaryEdges[(i + j) % numBoundaryEdges])].Position;
-                                    sfloat d = math.max(Dotxyz1(p0, x), Dotxyz1(p1, x));
+                                    tfloat d = math.max(Dotxyz1(p0, x), Dotxyz1(p1, x));
                                     accept &= d < convexEps;
                                 }
 
@@ -939,7 +940,7 @@ namespace ME.ECS.Essentials.Physics
         // Removes vertices that are colinear with two neighbors or coplanar with all neighbors.
         public unsafe void RemoveRedundantVertices()
         {
-            sfloat toleranceSq = 1e-10f;
+            tfloat toleranceSq = 1e-10f;
 
             NativeArray<Vertex> newVertices = new NativeArray<Vertex>(Vertices.PeakCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             NativeArray<bool> removed = new NativeArray<bool>(Vertices.PeakCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -975,7 +976,7 @@ namespace ME.ECS.Essentials.Physics
                             // edges, against a very small fixed tolerance
                             float3 v0 = Vertices[index0].Position;
                             float3 edge0Vec = x - v0;
-                            sfloat edge0LengthSq = math.lengthsq(edge0Vec);
+                            tfloat edge0LengthSq = math.lengthsq(edge0Vec);
                             Edge edge1 = GetLinkedEdge(edge0.Prev);
 
                             // Test if the triangle normals face the same direction.  This is necessary for nearly flat hulls, where a vertex can be on triangles that
@@ -998,10 +999,10 @@ namespace ME.ECS.Essentials.Physics
                                 if (!removed[index1]) // Ignore already removed vertices
                                 {
                                     float3 lineVec = v1 - v0;
-                                    sfloat lineVecLengthSq = math.lengthsq(lineVec);
-                                    sfloat dot = math.dot(edge0Vec, lineVec);
-                                    sfloat diffSq = edge0LengthSq * lineVecLengthSq - dot * dot;
-                                    sfloat scaledTolSq = toleranceSq * lineVecLengthSq;
+                                    tfloat lineVecLengthSq = math.lengthsq(lineVec);
+                                    tfloat dot = math.dot(edge0Vec, lineVec);
+                                    tfloat diffSq = edge0LengthSq * lineVecLengthSq - dot * dot;
+                                    tfloat scaledTolSq = toleranceSq * lineVecLengthSq;
                                     keep &= (dot<0 || dot> lineVecLengthSq || diffSq > scaledTolSq);
 
                                     Edge edge2 = GetLinkedEdge(edge1.Prev);
@@ -1012,7 +1013,7 @@ namespace ME.ECS.Essentials.Physics
                                         {
                                             float3 v2 = Vertices[index2].Position;
                                             float3 n = math.cross(v2 - v0, v1 - v0);
-                                            sfloat det = math.dot(n, edge0Vec);
+                                            tfloat det = math.dot(n, edge0Vec);
                                             coplanar &= (det * det < math.lengthsq(n) * toleranceSq);
                                         }
                                     }
@@ -1063,7 +1064,7 @@ namespace ME.ECS.Essentials.Physics
             public int VertexA; // Source vertex, index into Vertices
             public int VertexB; // Source vertex
             public float3 Target; // Position to replace the original vertices with
-            public sfloat Cost; // Sum of squared distances from Target to the planes incident to the original vertices
+            public tfloat Cost; // Sum of squared distances from Target to the planes incident to the original vertices
         }
 
         // Orders Collapses by Cost
@@ -1109,7 +1110,7 @@ namespace ME.ECS.Essentials.Physics
             // error = x^T * matrix * x, its only extreme point is a minimum and its gradient is linear
             // the value of x that minimizes error is the root of the gradient
             float4 x = float4.zero;
-            sfloat cost = float.MaxValue;
+            tfloat cost = float.MaxValue;
             switch (Dimension)
             {
                 case 2:
@@ -1120,7 +1121,7 @@ namespace ME.ECS.Essentials.Physics
                     float3 v = Vertices[b].Position;
                     float3 edge = v - u;
                     float3x3 solveMatrix = new float3x3(matrix.c0.xyz, matrix.c1.xyz, matrix.c2.xyz);
-                    sfloat denom = math.dot(math.mul(solveMatrix, edge), edge);
+                    tfloat denom = math.dot(math.mul(solveMatrix, edge), edge);
                     if (denom == 0) // unexpected, just take the midpoint to avoid divide by zero
                     {
                         x = new float4(u + edge * 0.5f, 1);
@@ -1130,13 +1131,13 @@ namespace ME.ECS.Essentials.Physics
                     {
                         // Find the extreme point on the line through u and v
                         float3 solveOffset = matrix.c3.xyz;
-                        sfloat extremum = (float)(-math.dot(math.mul(solveMatrix, u) + solveOffset, edge) / denom);
+                        tfloat extremum = (float)(-math.dot(math.mul(solveMatrix, u) + solveOffset, edge) / denom);
                         x = new float4(u + edge * math.clamp(extremum, 0.0f, 1.0f), 1);
 
                         // Minimum error is at the extremum or one of the two boundaries, test all three and choose the least
-                        sfloat uError = (float)Math.Dotxyz1(math.mul(matrix, new float4(u, 1)), u);
-                        sfloat vError = (float)Math.Dotxyz1(math.mul(matrix, new float4(v, 1)), v);
-                        sfloat xError = (float)math.dot(math.mul(matrix, x), x);
+                        tfloat uError = (float)Math.Dotxyz1(math.mul(matrix, new float4(u, 1)), u);
+                        tfloat vError = (float)Math.Dotxyz1(math.mul(matrix, new float4(v, 1)), v);
+                        tfloat xError = (float)math.dot(math.mul(matrix, x), x);
                         cost = math.min(math.min(uError, vError), xError);
                         float3 point = math.select(u.xyz, v.xyz, cost == vError);
                         point = math.select(point, x.xyz, cost == xError);
@@ -1152,7 +1153,7 @@ namespace ME.ECS.Essentials.Physics
                         new float4(matrix.c1.xyz, 0),
                         new float4(matrix.c2.xyz, 0),
                         new float4(matrix.c3.xyz, 1));
-                    sfloat det = math.determinant(solveMatrix);
+                    tfloat det = math.determinant(solveMatrix);
                     if (det < 1e-6f) // determinant should be positive, small values indicate fewer than three planes that are significantly distinct from each other
                     {
                         goto case 2;
@@ -1184,7 +1185,7 @@ namespace ME.ECS.Essentials.Physics
         // introducing error in excess of maxError.
         // Based on QEM, but with contractions only allowed for vertices connected by a triangle edge, and only to be replaced by vertices on the same edge
         // Note, calling this function destroys vertex user data
-        public unsafe void SimplifyVertices(sfloat maxError, int maxVertices)
+        public unsafe void SimplifyVertices(tfloat maxError, int maxVertices)
         {
             // Simplification is only possible in 2D / 3D
             if (Dimension < 2)
@@ -1275,7 +1276,7 @@ namespace ME.ECS.Essentials.Physics
             // Repeatedly simplify the hull until the count is less than maxVertices and there are no further changes that satisfy maxError
             NativeArray<Vertex> newVertices = new NativeArray<Vertex>(numVertices, Allocator.Temp, NativeArrayOptions.UninitializedMemory); // Note, only Position and UserData are used
             bool enforceMaxVertices = false;
-            sfloat maxCost = maxError * maxError;
+            tfloat maxCost = maxError * maxError;
             while (true)
             {
                 // Build a list of potential edge collapses
@@ -1411,7 +1412,7 @@ namespace ME.ECS.Essentials.Physics
             public int Face0; // Face index
             public int Face1; // Face index
             public Plane Plane; // Plane to replace the two faces
-            public sfloat Cost; // Sum of squared distances from original vertices to Plane
+            public tfloat Cost; // Sum of squared distances from original vertices to Plane
             public bool SmallAngle; // True if the angle between the source faces is below the minimum angle threshold
         }
 
@@ -1420,7 +1421,7 @@ namespace ME.ECS.Essentials.Physics
         struct OLSData
         {
             // Inputs
-            private sfloat m_Weight; // Cost multiplier
+            private tfloat m_Weight; // Cost multiplier
             private int m_Count; // Number of points in the set
             private float3 m_Sums; // Sum of x, y, z
             private float3 m_SquareSums; // Sum of x^2, y^2, z^2
@@ -1428,7 +1429,7 @@ namespace ME.ECS.Essentials.Physics
 
             // Outputs, assigned when Solve() is called
             public Plane Plane; // OLS plane of the points in the set
-            public sfloat Cost; // m_Weight * sum of squared distances from points in the set to Plane
+            public tfloat Cost; // m_Weight * sum of squared distances from points in the set to Plane
 
             // Empty the set
             public void Init()
@@ -1441,7 +1442,7 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // Add a single point to the set
-            public void Include(float3 v, sfloat weight)
+            public void Include(float3 v, tfloat weight)
             {
                 m_Weight = math.max(m_Weight, weight);
                 m_Count++;
@@ -1451,7 +1452,7 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // Add all points from the
-            public void Include(OLSData source, sfloat weight)
+            public void Include(OLSData source, tfloat weight)
             {
                 m_Weight = math.max(math.max(m_Weight, source.m_Weight), weight);
                 m_Count += source.m_Count;
@@ -1525,16 +1526,16 @@ namespace ME.ECS.Essentials.Physics
                 float3 momentSum = new float3(sums.z, productSums.zy);
                 float3 coeff = (float3)math.mul(gramInv, momentSum);
                 float3 normal = new float3(coeff.yz, -1);
-                sfloat invLength = math.rsqrt(math.lengthsq(normal));
+                tfloat invLength = math.rsqrt(math.lengthsq(normal));
                 plane = new Plane(normal * invLength, coeff.x * invLength);
                 return true;
             }
         }
 
         // Helper for calculating edge weights, returns the squared sin of the angle between normal0 and normal1 if the angle is > 90 degrees, otherwise returns 1.
-        sfloat SinAngleSq(float3 normal0, float3 normal1)
+        tfloat SinAngleSq(float3 normal0, float3 normal1)
         {
-            sfloat cosAngle = math.dot(normal0, normal1);
+            tfloat cosAngle = math.dot(normal0, normal1);
             return math.select(1.0f, 1.0f - cosAngle * cosAngle, cosAngle < 0);
         }
 
@@ -1545,7 +1546,7 @@ namespace ME.ECS.Essentials.Physics
         // Returns - the distance that the faces were moved in by shrinking
         // Merging and shrinking are combined into a single operation because both work on the planes of the hull and require vertices to be rebuilt
         // afterwards.  Rebuilding vertices is the slowest part of hull generation, so best to do it only once.
-        public unsafe sfloat SimplifyFacesAndShrink(sfloat simplificationTolerance, sfloat minAngleBetweenFaces, sfloat shrinkDistance, int maxFaces, int maxVertices)
+        public unsafe tfloat SimplifyFacesAndShrink(tfloat simplificationTolerance, tfloat minAngleBetweenFaces, tfloat shrinkDistance, int maxFaces, int maxVertices)
         {
             // Return if merging is not allowed and shrinking is off
             if (simplificationTolerance <= 0.0f && minAngleBetweenFaces <= 0.0f && shrinkDistance <= 0.0f)
@@ -1559,9 +1560,9 @@ namespace ME.ECS.Essentials.Physics
                 return 0.0f;
             }
 
-            sfloat cosMinAngleBetweenFaces = math.cos(minAngleBetweenFaces);
-            sfloat simplificationToleranceSq = simplificationTolerance * simplificationTolerance;
-            sfloat k_cosMaxMergeAngle = 0.707107f; // Don't merge planes at >45 degrees
+            tfloat cosMinAngleBetweenFaces = math.cos(minAngleBetweenFaces);
+            tfloat simplificationToleranceSq = simplificationTolerance * simplificationTolerance;
+            tfloat k_cosMaxMergeAngle = 0.707107f; // Don't merge planes at >45 degrees
 
             // Make a copy of the planes that we can edit
             int numPlanes = NumFaces;
@@ -1608,13 +1609,13 @@ namespace ME.ECS.Essentials.Physics
 
             // Build OLS data for each face, and calculate the minimum span of the hull among its plane normal directions
             NativeArray<OLSData> olsData = new NativeArray<OLSData>(maxNumPlanes, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-            sfloat minSpan = float.MaxValue;
+            tfloat minSpan = float.MaxValue;
             for (int i = 0; i < numPlanes; i++)
             {
                 Plane plane = planes[i];
                 OLSData ols = new OLSData(); ols.Init();
 
-                sfloat lastSinAngleSq;
+                tfloat lastSinAngleSq;
                 {
                     Edge lastEdge = faceEdges[firstFaceEdgeIndex[i] + numFaceEdges[i] - 1];
                     Plane lastPlane = planes[Triangles[GetLinkedEdge(lastEdge).TriangleIndex].FaceIndex];
@@ -1626,8 +1627,8 @@ namespace ME.ECS.Essentials.Physics
                     // Use the minimum angle of the two edges incident to the vertex to weight it
                     Edge nextEdge = faceEdges[firstFaceEdgeIndex[i] + j];
                     Plane nextPlane = planes[Triangles[GetLinkedEdge(nextEdge).TriangleIndex].FaceIndex];
-                    sfloat nextSinAngleSq = SinAngleSq(plane.Normal, nextPlane.Normal);
-                    sfloat weight = 1.0f / math.max(float.Epsilon, math.min(lastSinAngleSq, nextSinAngleSq));
+                    tfloat nextSinAngleSq = SinAngleSq(plane.Normal, nextPlane.Normal);
+                    tfloat weight = 1.0f / math.max(float.Epsilon, math.min(lastSinAngleSq, nextSinAngleSq));
                     lastSinAngleSq = nextSinAngleSq;
 
                     // Include the weighted vertex in OLS data
@@ -1638,7 +1639,7 @@ namespace ME.ECS.Essentials.Physics
                 olsData[i] = ols;
 
                 // Calculate the span in the plane normal direction
-                sfloat span = 0.0f;
+                tfloat span = 0.0f;
                 foreach (Vertex vertex in Vertices.Elements)
                 {
                     span = math.max(span, -plane.SignedDistanceToPoint(vertex.Position));
@@ -1681,8 +1682,8 @@ namespace ME.ECS.Essentials.Physics
                     }
 
                     // Check for sharp angles
-                    sfloat k_cosSharpAngle = -0.866025f; // 150deg
-                    sfloat dot = math.dot(planes[i].Normal, planes[neighborFaceIndex].Normal);
+                    tfloat k_cosSharpAngle = -0.866025f; // 150deg
+                    tfloat dot = math.dot(planes[i].Normal, planes[neighborFaceIndex].Normal);
                     if (dot < k_cosMaxMergeAngle)
                     {
                         if (dot < k_cosSharpAngle)
@@ -1732,7 +1733,7 @@ namespace ME.ECS.Essentials.Physics
 
             // Calculate the plane offset for shrinking
             // shrinkDistance is the maximum distance that we may move a vertex.  Find the largest plane offset that respects that limit.
-            sfloat offset = shrinkDistance;
+            tfloat offset = shrinkDistance;
             {
                 // Find an edge incident to each vertex (doesn't matter which one)
                 Edge* vertexEdges = stackalloc Edge[Vertices.PeakCount];
@@ -1745,7 +1746,7 @@ namespace ME.ECS.Essentials.Physics
                 }
 
                 // Calculates the square of the distance that each vertex moves if all of its incident planes' are moved unit distance along their normals
-                sfloat maxShiftSq = 1.0f;
+                tfloat maxShiftSq = 1.0f;
                 NativeArray<int> planeIndices = new NativeArray<int>(numPlanes, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
                 foreach (int iVertex in Vertices.Indices)
                 {
@@ -1772,7 +1773,7 @@ namespace ME.ECS.Essentials.Physics
                     }
 
                     // Iterate over all triplets of planes
-                    sfloat k_cosWideAngle = 0.866025f; // Only limit movement of vertices at corners sharper than 30 degrees
+                    tfloat k_cosWideAngle = 0.866025f; // Only limit movement of vertices at corners sharper than 30 degrees
                     for (int i = 0; i < numPlaneIndices - 2; i++)
                     {
                         float3 iNormal = planes[planeIndices[i]].Normal;
@@ -1793,11 +1794,11 @@ namespace ME.ECS.Essentials.Physics
                                 if (math.any(dots < k_cosWideAngle))
                                 {
                                     // Calculate the movement of the planes' intersection with respect to the planes' shift
-                                    sfloat det = math.dot(ijCross, kNormal);
-                                    sfloat invDet = math.rcp(det);
+                                    tfloat det = math.dot(ijCross, kNormal);
+                                    tfloat invDet = math.rcp(det);
                                     float3 jkCross = math.cross(jNormal, kNormal);
                                     float3 kiCross = math.cross(kNormal, iNormal);
-                                    sfloat shiftSq = math.lengthsq(ijCross + jkCross + kiCross) * invDet * invDet;
+                                    tfloat shiftSq = math.lengthsq(ijCross + jkCross + kiCross) * invDet * invDet;
                                     shiftSq = math.select(shiftSq, 1e10f, invDet == 0.0f); // avoid nan/inf in unexpected case of zero or extremely small det
                                     Assert.IsTrue(shiftSq >= 1.0f);
                                     maxShiftSq = math.max(maxShiftSq, shiftSq);
@@ -1826,7 +1827,7 @@ namespace ME.ECS.Essentials.Physics
                     // Find the cheapest merge
                     int mergeIndex = 0;
                     int smallAngleMergeIndex = -1;
-                    sfloat smallAngleMergeCost = float.MaxValue;
+                    tfloat smallAngleMergeCost = float.MaxValue;
                     for (int i = 0; i < numMerges; i++)
                     {
                         if (merges[i].Cost < merges[mergeIndex].Cost)
@@ -1905,7 +1906,7 @@ namespace ME.ECS.Essentials.Physics
                         }
 
                         // Limit the maximum merge angle
-                        sfloat dot = math.dot(planes[updateMerge.Face0].Normal, planes[updateMerge.Face1].Normal);
+                        tfloat dot = math.dot(planes[updateMerge.Face0].Normal, planes[updateMerge.Face1].Normal);
                         if (dot < k_cosMaxMergeAngle)
                         {
                             merges[i] = merges[--numMerges];
@@ -1913,7 +1914,7 @@ namespace ME.ECS.Essentials.Physics
                         }
 
                         // Calculate the new plane and cost
-                        sfloat weight = 1.0f / math.max(float.Epsilon, SinAngleSq(planes[updateMerge.Face0].Normal, planes[updateMerge.Face1].Normal));
+                        tfloat weight = 1.0f / math.max(float.Epsilon, SinAngleSq(planes[updateMerge.Face0].Normal, planes[updateMerge.Face1].Normal));
                         OLSData combined = olsData[updateMerge.Face0];
                         combined.Include(olsData[updateMerge.Face1], weight);
                         combined.Solve(planes[updateMerge.Face0].Normal, planes[updateMerge.Face1].Normal);
@@ -2049,12 +2050,12 @@ namespace ME.ECS.Essentials.Physics
                         // Find the planes' point of intersection
                         float3 x;
                         {
-                            sfloat det = math.dot(planes[i].Normal, jkCross);
+                            tfloat det = math.dot(planes[i].Normal, jkCross);
                             if (math.abs(det) < 1e-8f)
                             {
                                 continue;
                             }
-                            sfloat invDet = 1.0f / det;
+                            tfloat invDet = 1.0f / det;
                             x = (float3)((planes[i].Distance * jkCross - planes[j].Distance * ikCross + planes[k].Distance * ijCross) * -invDet);
                         }
 
@@ -2063,7 +2064,7 @@ namespace ME.ECS.Essentials.Physics
                             bool inside = true;
                             for (int l = 0; l < numPlanes; l++)
                             {
-                                sfloat tolerance = 1e-5f;
+                                tfloat tolerance = 1e-5f;
                                 if (math.dot(planes[l].Normal, x) > tolerance - planes[l].Distance)
                                 {
                                     inside = false;
@@ -2078,7 +2079,7 @@ namespace ME.ECS.Essentials.Physics
                         }
 
                         // Check if we already found an intersection that is almost exactly the same as x
-                        sfloat minDistanceSq = 1e-10f;
+                        tfloat minDistanceSq = 1e-10f;
                         bool keep = true;
                         for (int l = 0; l < numNewVertices; l++)
                         {
@@ -2117,7 +2118,7 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // When more than three planes meet at one point, the intersections computed from each subset of three planes can be slightly different
-            // due to sfloat rounding.  This creates unnecessary extra points in the hull and sometimes also numerical problems for BuildFaceIndices
+            // due to tfloat rounding.  This creates unnecessary extra points in the hull and sometimes also numerical problems for BuildFaceIndices
             // from degenerate triangles.  This is fixed by another round of simplification with the error tolerance set low enough that the vertices
             // cannot move far enough to introduce new unintended faces.
             RemoveRedundantVertices();
@@ -2282,7 +2283,7 @@ namespace ME.ECS.Essentials.Physics
                     float3 offset = ComputeCentroid();
                     for (int n = Vertices.PeakCount, i = n - 1, j = 0; j < n; i = j++)
                     {
-                        sfloat w = math.length(math.cross(Vertices[i].Position - offset, Vertices[j].Position - offset));
+                        tfloat w = math.length(math.cross(Vertices[i].Position - offset, Vertices[j].Position - offset));
                         mp.CenterOfMass += (Vertices[i].Position + Vertices[j].Position + offset) * w;
                         mp.SurfaceArea += w;
                     }
@@ -2295,13 +2296,13 @@ namespace ME.ECS.Essentials.Physics
                 {
                     float3 offset = ComputeCentroid();
                     int numTriangles = 0;
-                    sfloat* dets = stackalloc sfloat[Triangles.Capacity];
+                    tfloat* dets = stackalloc tfloat[Triangles.Capacity];
                     foreach (int i in Triangles.Indices)
                     {
                         float3 v0 = Vertices[Triangles[i].Vertex0].Position - offset;
                         float3 v1 = Vertices[Triangles[i].Vertex1].Position - offset;
                         float3 v2 = Vertices[Triangles[i].Vertex2].Position - offset;
-                        sfloat w = Det(v0, v1, v2);
+                        tfloat w = Det(v0, v1, v2);
                         mp.CenterOfMass += (v0 + v1 + v2) * w;
                         mp.Volume += w;
                         mp.SurfaceArea += math.length(math.cross(v1 - v0, v2 - v0));
@@ -2353,7 +2354,7 @@ namespace ME.ECS.Essentials.Physics
                 int3 a = Vertices[vertex1].IntPosition - o;
                 int3 b = Vertices[vertex2].IntPosition - o;
                 IntCross(a, b, out long cx, out long cy, out long cz);
-                sfloat scaleSq = m_IntegerSpace.Scale * m_IntegerSpace.Scale; // scale down to avoid overflow normalizing
+                tfloat scaleSq = m_IntegerSpace.Scale * m_IntegerSpace.Scale; // scale down to avoid overflow normalizing
                 cross = new float3(cx * scaleSq, cy * scaleSq, cz * scaleSq);
                 point = m_IntegerSpace.ToFloatSpace(o);
             }
@@ -2423,7 +2424,7 @@ namespace ME.ECS.Essentials.Physics
             NativeArray<float3> points,
             ConvexHullGenerationParameters generationParameters,
             int maxVertices, int maxFaces, int maxFaceVertices,
-            out sfloat convexRadius
+            out tfloat convexRadius
         )
         {
             int verticesCapacity = math.max(maxVertices, points.Length);
@@ -2561,7 +2562,7 @@ namespace ME.ECS.Essentials.Physics
         private NativeArray<Plane> m_Planes;
         public ConvexHullBuilder Builder;
 
-        public unsafe ConvexHullBuilderStorage(int verticesCapacity, Allocator allocator, Aabb domain, sfloat simplificationTolerance, ConvexHullBuilder.IntResolution resolution)
+        public unsafe ConvexHullBuilderStorage(int verticesCapacity, Allocator allocator, Aabb domain, tfloat simplificationTolerance, ConvexHullBuilder.IntResolution resolution)
         {
             int trianglesCapacity = 2 * verticesCapacity;
             m_Vertices = new NativeArray<ConvexHullBuilder.Vertex>(verticesCapacity, allocator);

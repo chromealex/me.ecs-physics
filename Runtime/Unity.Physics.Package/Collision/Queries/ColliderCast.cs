@@ -2,9 +2,10 @@ using System;
 using ME.ECS;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Assertions;
@@ -76,7 +77,7 @@ namespace ME.ECS.Essentials.Physics
         /// Fraction of the distance along the Ray where the hit occurred.
         /// </summary>
         /// <value> Returns a value between 0 and 1. </value>
-        public sfloat Fraction { get; set; }
+        public tfloat Fraction { get; set; }
 
         /// <summary>
         ///
@@ -316,7 +317,7 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        private static unsafe bool ConvexConvex(ColliderCastInput input, Collider* target, sfloat maxFraction, out ColliderCastHit hit)
+        private static unsafe bool ConvexConvex(ColliderCastInput input, Collider* target, tfloat maxFraction, out ColliderCastHit hit)
         {
             hit = default;
 
@@ -324,10 +325,10 @@ namespace ME.ECS.Essentials.Physics
             MTransform targetFromQuery = new MTransform(input.Orientation, input.Start);
 
             // Conservative advancement
-            sfloat tolerance = 1e-3f;      // return if this close to a hit
-            sfloat keepDistance = 1e-4f;   // avoid bad cases for GJK (penetration / exact hit)
+            tfloat tolerance = 1e-3f;      // return if this close to a hit
+            tfloat keepDistance = 1e-4f;   // avoid bad cases for GJK (penetration / exact hit)
             int iterations = 10;                // return after this many advances, regardless of accuracy
-            sfloat fraction = 0.0f;
+            tfloat fraction = 0.0f;
 
             while (true)
             {
@@ -368,7 +369,7 @@ namespace ME.ECS.Essentials.Physics
                 }
 
                 // Check for a miss
-                sfloat dot = math.dot(distanceResult.NormalInA, input.Ray.Displacement);
+                tfloat dot = math.dot(distanceResult.NormalInA, input.Ray.Displacement);
                 if (dot <= 0.0f)
                 {
                     // Collider is moving away from the target, it will never hit
@@ -475,7 +476,7 @@ namespace ME.ECS.Essentials.Physics
                 polygon.InitNoVertices(filter, material);
                 for (int polygonIndex = 0; polygonIndex < numPolygons; polygonIndex++)
                 {
-                    sfloat fraction = collector.MaxFraction;
+                    tfloat fraction = collector.MaxFraction;
 
                     if (isQuad)
                     {
@@ -665,7 +666,7 @@ namespace ME.ECS.Essentials.Physics
                         for (int iTriangle = 0; iTriangle < 2; iTriangle++)
                         {
                             // Cast
-                            sfloat fraction = collector.MaxFraction;
+                            tfloat fraction = collector.MaxFraction;
                             polygon.SetAsTriangle(a, b, c);
 
                             hadHit |= dispatcher.Dispatch(input, (ConvexCollider*)&polygon, ref collector, terrain.NumColliderKeyBits, terrain.GetSubKey(quadIndex, iTriangle));

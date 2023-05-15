@@ -6,9 +6,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -61,7 +62,7 @@ namespace ME.ECS.Essentials.Physics
             public BlobArray.Accessor<Material> Materials => new BlobArray.Accessor<Material>(ref MaterialsBlob);
         }
 
-        internal sfloat m_BoundingRadius;
+        internal tfloat m_BoundingRadius;
 
         // The bounding volume
         private BlobArray m_BvhNodesBlob;
@@ -84,7 +85,7 @@ namespace ME.ECS.Essentials.Physics
         internal void UpdateCachedBoundingRadius()
         {
             float3 center = BoundingVolumeHierarchy.Domain.Center;
-            sfloat boundingRadiusSq = 0;
+            tfloat boundingRadiusSq = 0;
 
             for (int i = 0; i < Sections.Length; ++i)
             {

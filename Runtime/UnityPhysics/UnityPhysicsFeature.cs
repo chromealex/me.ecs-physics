@@ -1,7 +1,7 @@
 ﻿using ME.ECS;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
-using tfloat = sfloat;
+using tfloat = tfloat;
 #else
 using Unity.Mathematics;
 using tfloat = System.Single;

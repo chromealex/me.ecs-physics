@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -21,8 +22,8 @@ namespace ME.ECS.Essentials.Physics
         public JacobianFlags JacobianFlags;
         public int NumContacts;
         public float3 Normal;
-        public sfloat CoefficientOfFriction;
-        public sfloat CoefficientOfRestitution;
+        public tfloat CoefficientOfFriction;
+        public tfloat CoefficientOfRestitution;
         public ColliderKeyPair ColliderKeys;
 
         // followed by NumContacts * ContactPoint
@@ -32,7 +33,7 @@ namespace ME.ECS.Essentials.Physics
     public struct ContactPoint
     {
         public float3 Position; // world space position on object B
-        public sfloat Distance;  // separating distance along the manifold normal
+        public tfloat Distance;  // separating distance along the manifold normal
     }
 
     // Contact manifold stream generation functions
@@ -49,7 +50,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Write a set of contact manifolds for a pair of bodies to the given stream.
         public static unsafe void BodyBody(in RigidBody rigidBodyA, in RigidBody rigidBodyB, in MotionVelocity motionVelocityA, in MotionVelocity motionVelocityB,
-            sfloat collisionTolerance, sfloat timeStep, BodyIndexPair pair, ref NativeStream.Writer contactWriter)
+            tfloat collisionTolerance, tfloat timeStep, BodyIndexPair pair, ref NativeStream.Writer contactWriter)
         {
             var colliderA = (Collider*)rigidBodyA.Collider.GetUnsafePtr();
             var colliderB = (Collider*)rigidBodyB.Collider.GetUnsafePtr();
@@ -213,7 +214,7 @@ namespace ME.ECS.Essentials.Physics
         private static unsafe void ConvexConvex(
             Context context, ColliderKeyPair colliderKeys,
             Collider* convexColliderA, Collider* convexColliderB, [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform worldFromB,
-            sfloat maxDistance, bool flipped)
+            tfloat maxDistance, bool flipped)
         {
             Material materialA = ((ConvexColliderHeader*)convexColliderA)->Material;
             Material materialB = ((ConvexColliderHeader*)convexColliderB)->Material;
@@ -438,7 +439,7 @@ namespace ME.ECS.Essentials.Physics
             readonly Collider* m_CompositeColliderB;
             readonly MTransform m_WorldFromA;
             readonly MTransform m_WorldFromB;
-            readonly sfloat m_CollisionTolerance;
+            readonly tfloat m_CollisionTolerance;
             readonly bool m_Flipped;
 
             ColliderKeyPath m_CompositeColliderKeyPath;
@@ -446,7 +447,7 @@ namespace ME.ECS.Essentials.Physics
             public ConvexCompositeOverlapCollector(
                 Context context,
                 Collider* convexCollider, ColliderKey convexColliderKey, Collider* compositeCollider,
-                MTransform worldFromA, MTransform worldFromB, sfloat collisionTolerance, bool flipped)
+                MTransform worldFromA, MTransform worldFromB, tfloat collisionTolerance, bool flipped)
             {
                 m_Context = context;
                 m_ConvexColliderA = convexCollider;
@@ -645,7 +646,7 @@ namespace ME.ECS.Essentials.Physics
 
         private static unsafe void ConvexTerrain(
             Context context, ColliderKeyPair colliderKeys, [NoAlias] Collider* convexColliderA, [NoAlias] Collider* terrainColliderB, [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform worldFromB,
-            sfloat maxDistance, bool flipped)
+            tfloat maxDistance, bool flipped)
         {
             ref var terrain = ref ((TerrainCollider*)terrainColliderB)->Terrain;
 
@@ -683,7 +684,7 @@ namespace ME.ECS.Essentials.Physics
                 float3 v1 = hull.Vertices[1];
                 float3 t0 = float3.zero;
                 float3 t1 = new float3(1,1,1);
-                float3 d = (sfloat)1.0f / 7.0f;
+                float3 d = (tfloat)1.0f / 7.0f;
                 for (int i = 0; i < 8; i++)
                 {
                     capsuleVertices[i] = v0 * t0 + v1 * t1;
@@ -705,10 +706,10 @@ namespace ME.ECS.Essentials.Physics
             {
                 float3 pointAInB = Math.Mul(bFromA, vertices[iVertex]);
                 float3 normalInB = float3.zero;
-                if (terrain.GetHeightAndGradient(pointAInB.xz, out sfloat height, out float2 gradient))
+                if (terrain.GetHeightAndGradient(pointAInB.xz, out tfloat height, out float2 gradient))
                 {
                     float3 normal = math.normalize(new float3(gradient.x, 1.0f, gradient.y));
-                    sfloat distance = (pointAInB.y - height) * normal.y;
+                    tfloat distance = (pointAInB.y - height) * normal.y;
                     if (distance < maxDistance + hull.ConvexRadius)
                     {
                         // The current manifold must be flushed if it's full or the normals don't match
@@ -738,14 +739,14 @@ namespace ME.ECS.Essentials.Physics
         private static unsafe void TerrainConvex(
             Context context, ColliderKeyPair colliderKeys,
             Collider* terrainColliderA, Collider* convexColliderB, MTransform worldFromA, MTransform worldFromB,
-            sfloat maxDistance, bool flipped)
+            tfloat maxDistance, bool flipped)
         {
             ConvexTerrain(context, colliderKeys, convexColliderB, terrainColliderA, worldFromB, worldFromA, maxDistance, !flipped);
         }
 
         private static unsafe void CompositeTerrain(
             Context context, Collider* compositeColliderA, Collider* terrainColliderB, MTransform worldFromA, MTransform worldFromB,
-            sfloat maxDistance, bool flipped)
+            tfloat maxDistance, bool flipped)
         {
             var collector = new CompositeTerrainLeafCollector(
                 context, compositeColliderA, terrainColliderB, worldFromA, worldFromB, maxDistance, flipped);
@@ -754,7 +755,7 @@ namespace ME.ECS.Essentials.Physics
 
         private static unsafe void TerrainComposite(
             Context context, Collider* terrainColliderA, Collider* compositeColliderB, MTransform worldFromA, MTransform worldFromB,
-            sfloat maxDistance, bool flipped)
+            tfloat maxDistance, bool flipped)
         {
             CompositeTerrain(context, compositeColliderB, terrainColliderA, worldFromB, worldFromA, maxDistance, !flipped);
         }
@@ -766,7 +767,7 @@ namespace ME.ECS.Essentials.Physics
             readonly Collider* m_TerrainColliderB;
             MTransform m_WorldFromA;
             readonly MTransform m_WorldFromB;
-            readonly sfloat m_MaxDistance;
+            readonly tfloat m_MaxDistance;
             readonly bool m_Flipped;
 
             ColliderKeyPath m_KeyPath;
@@ -774,7 +775,7 @@ namespace ME.ECS.Essentials.Physics
             public CompositeTerrainLeafCollector(
                 Context context,
                 Collider* compositeColliderA, Collider* terrainColliderB,
-                MTransform worldFromA, MTransform worldFromB, sfloat maxDistance, bool flipped)
+                MTransform worldFromA, MTransform worldFromB, tfloat maxDistance, bool flipped)
             {
                 m_Context = context;
                 m_CompositeColliderA = compositeColliderA;

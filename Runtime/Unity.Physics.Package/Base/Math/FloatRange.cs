@@ -1,9 +1,10 @@
 using System;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -15,16 +16,16 @@ namespace ME.ECS.Essentials.Physics
         /// </summary>
         public struct FloatRange : IEquatable<FloatRange>
         {
-            public sfloat Min;
-            public sfloat Max;
+            public tfloat Min;
+            public tfloat Max;
 
-            public FloatRange(sfloat min, sfloat max)
+            public FloatRange(tfloat min, tfloat max)
             {
                 Min = min;
                 Max = max;
             }
 
-            public sfloat Mid => math.lerp(Min, Max, 0.5f);
+            public tfloat Mid => math.lerp(Min, Max, 0.5f);
 
             public bool Equals(FloatRange other) => Min.Equals(other.Min) && Max.Equals(other.Max);
 

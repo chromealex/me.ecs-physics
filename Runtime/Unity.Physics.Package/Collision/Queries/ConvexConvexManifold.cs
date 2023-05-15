@@ -2,9 +2,10 @@ using System.Runtime.CompilerServices;
 using Unity.Burst;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -91,7 +92,7 @@ namespace ME.ECS.Essentials.Physics
         // Create a contact point for a pair of spheres in world space.
         public static unsafe void SphereSphere(
             SphereCollider* sphereA, SphereCollider* sphereB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             DistanceQueries.Result convexDistance = DistanceQueries.SphereSphere(sphereA, sphereB, aFromB);
@@ -108,7 +109,7 @@ namespace ME.ECS.Essentials.Physics
         // Create a contact point for a box and a sphere in world space.
         public static unsafe void BoxSphere(
             [NoAlias] BoxCollider* boxA, [NoAlias] SphereCollider* sphereB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             DistanceQueries.Result convexDistance = DistanceQueries.BoxSphere(boxA, sphereB, aFromB);
@@ -125,7 +126,7 @@ namespace ME.ECS.Essentials.Physics
         // Create contact points for a pair of boxes in world space.
         public static unsafe void BoxBox(
             BoxCollider* boxA, BoxCollider* boxB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             manifold = new Manifold();
@@ -141,12 +142,12 @@ namespace ME.ECS.Essentials.Physics
 
             // Test planes of each box against the other's vertices
             float3 normal; // in BoxA-space
-            sfloat distance;
+            tfloat distance;
             {
                 float3 normalA = new float3(1, 0, 0);
                 float3 normalB = new float3(1, 0, 0);
-                sfloat distA = 0.0f;
-                sfloat distB = 0.0f;
+                tfloat distA = 0.0f;
+                tfloat distB = 0.0f;
                 if (!PointPlanes(boxAFromBoxB, halfExtentsA, halfExtentsB, maxDistance, ref normalA, ref distA) ||
                     !PointPlanes(boxBFromBoxA, halfExtentsB, halfExtentsA, maxDistance, ref normalB, ref distB))
                 {
@@ -184,15 +185,15 @@ namespace ME.ECS.Essentials.Physics
 
                         float3 edgeNormal = math.normalize(dir);
                         float3 supportA = math.select(halfExtentsA, -halfExtentsA, dir < new float3(0.0f));
-                        sfloat maxA = math.abs(math.dot(supportA, edgeNormal));
-                        sfloat minA = -maxA;
+                        tfloat maxA = math.abs(math.dot(supportA, edgeNormal));
+                        tfloat minA = -maxA;
                         float3 dirInB = math.mul(boxBFromBoxA.Rotation, dir);
                         float3 supportBinB = math.select(halfExtentsB, -halfExtentsB, dirInB < new float3(0.0f));
                         float3 supportB = math.mul(boxAFromBoxB.Rotation, supportBinB);
-                        sfloat offsetB = math.abs(math.dot(supportB, edgeNormal));
-                        sfloat centerB = math.dot(boxAFromBoxB.Translation, edgeNormal);
-                        sfloat maxB = centerB + offsetB;
-                        sfloat minB = centerB - offsetB;
+                        tfloat offsetB = math.abs(math.dot(supportB, edgeNormal));
+                        tfloat centerB = math.dot(boxAFromBoxB.Translation, edgeNormal);
+                        tfloat maxB = centerB + offsetB;
+                        tfloat minB = centerB - offsetB;
 
                         float2 diffs = new float2(minB - maxA, minA - maxB); // positive normal, negative normal
                         if (math.all(diffs > new float2(maxDistance)))
@@ -239,7 +240,7 @@ namespace ME.ECS.Essentials.Physics
         // Create a single point manifold between a capsule and a sphere in world space.
         public static unsafe void CapsuleSphere(
             [NoAlias] CapsuleCollider* capsuleA, [NoAlias] SphereCollider* sphereB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             DistanceQueries.Result convexDistance = DistanceQueries.CapsuleSphere(
@@ -257,7 +258,7 @@ namespace ME.ECS.Essentials.Physics
         // Create a contact point for a pair of capsules in world space.
         public static unsafe void CapsuleCapsule(
             CapsuleCollider* capsuleA, CapsuleCollider* capsuleB,
-            [NoAlias] MTransform worldFromA, [NoAlias] MTransform aFromB, sfloat maxDistance,
+            [NoAlias] MTransform worldFromA, [NoAlias] MTransform aFromB, tfloat maxDistance,
             out Manifold manifold)
         {
             // TODO: Should produce a multi-point manifold
@@ -275,7 +276,7 @@ namespace ME.ECS.Essentials.Physics
         // Create contact points for a box and triangle in world space.
         public static unsafe void BoxTriangle(
             [NoAlias] BoxCollider* boxA, [NoAlias] PolygonCollider* triangleB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             Assert.IsTrue(triangleB->Vertices.Length == 3);
@@ -323,8 +324,8 @@ namespace ME.ECS.Essentials.Physics
                 float4 planeVertexFace;
                 {
                     // Calculate the triangle normal
-                    sfloat triangleOffset = math.dot(triangleNormal, t0);
-                    sfloat expansionOffset = math.dot(math.abs(triangleNormal), halfExtents);
+                    tfloat triangleOffset = math.dot(triangleNormal, t0);
+                    tfloat expansionOffset = math.dot(math.abs(triangleNormal), halfExtents);
                     planeVertexFace = SelectMaxW(
                         new float4(triangleNormal, -triangleOffset - expansionOffset),
                         new float4(-triangleNormal, triangleOffset - expansionOffset));
@@ -386,7 +387,7 @@ namespace ME.ECS.Essentials.Physics
         // Create a single point manifold between a triangle and sphere in world space.
         public static unsafe void TriangleSphere(
             [NoAlias] PolygonCollider* triangleA, [NoAlias] SphereCollider* sphereB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             Assert.IsTrue(triangleA->Vertices.Length == 3);
@@ -407,7 +408,7 @@ namespace ME.ECS.Essentials.Physics
         // Create contact points for a capsule and triangle in world space.
         public static unsafe void CapsuleTriangle(
             [NoAlias] CapsuleCollider* capsuleA, [NoAlias] PolygonCollider* triangleB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             Assert.IsTrue(triangleB->Vertices.Length == 3);
@@ -442,14 +443,14 @@ namespace ME.ECS.Essentials.Physics
         // Create contact points for a pair of generic convex hulls in world space.
         public static unsafe void ConvexConvex(
             ref ConvexHull hullA, ref ConvexHull hullB,
-            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, sfloat maxDistance,
+            [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB, tfloat maxDistance,
             [NoAlias] out Manifold manifold)
         {
             // Get closest points on the hulls
             ConvexConvexDistanceQueries.Result result = ConvexConvexDistanceQueries.ConvexConvex(
                 hullA.VerticesPtr, hullA.NumVertices, hullB.VerticesPtr, hullB.NumVertices, aFromB, ConvexConvexDistanceQueries.PenetrationHandling.Exact3D);
 
-            sfloat sumRadii = hullB.ConvexRadius + hullA.ConvexRadius;
+            tfloat sumRadii = hullB.ConvexRadius + hullA.ConvexRadius;
             if (result.ClosestPoints.Distance < maxDistance + sumRadii)
             {
                 float3 normal = result.ClosestPoints.NormalInA;
@@ -522,7 +523,7 @@ namespace ME.ECS.Essentials.Physics
         #region Helpers
 
         // BoxBox() helper
-        private static bool PointPlanes(MTransform aFromB, float3 halfExtA, float3 halfExtB, sfloat maxDistance, ref float3 normalOut, ref sfloat distanceOut)
+        private static bool PointPlanes(MTransform aFromB, float3 halfExtA, float3 halfExtB, tfloat maxDistance, ref float3 normalOut, ref tfloat distanceOut)
         {
             // Calculate the AABB of box B in A-space
             Aabb aabbBinA;
@@ -591,7 +592,7 @@ namespace ME.ECS.Essentials.Physics
             public float3 Vertex1 { get; private set; }
             public float3 Edge { get; private set; }
             public float3 Perp { get; private set; }
-            public sfloat Offset { get; private set; }
+            public tfloat Offset { get; private set; }
             public int Index { get; private set; }
 
             // Face description
@@ -639,13 +640,13 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Cast ray originA, directionA against plane normalB, offsetB and update the ray hit fractions
-        private static void castRayPlane(float3 originA, float3 directionA, float3 normalB, sfloat offsetB, ref sfloat fracEnter, ref sfloat fracExit)
+        private static void castRayPlane(float3 originA, float3 directionA, float3 normalB, tfloat offsetB, ref tfloat fracEnter, ref tfloat fracExit)
         {
             // Cast edge A against plane B
-            sfloat start = math.dot(originA, normalB) - offsetB;
-            sfloat diff = math.dot(directionA, normalB);
-            sfloat end = start + diff;
-            sfloat frac = math.select(-start / diff, 0.0f, diff == 0.0f);
+            tfloat start = math.dot(originA, normalB) - offsetB;
+            tfloat diff = math.dot(directionA, normalB);
+            tfloat end = start + diff;
+            tfloat frac = math.select(-start / diff, 0.0f, diff == 0.0f);
 
             bool startInside = (start <= 0.0f);
             bool endInside = (end <= 0.0f);
@@ -662,7 +663,7 @@ namespace ME.ECS.Essentials.Physics
 
         // If the rejections of the faces from the contact normal are just barely touching, then FaceFace() might miss the closest points because of numerical error.
         // FaceFace() and FaceEdge() check if they found a point as close as the closest, and if not they return false so that the caller can add it.
-        private static sfloat closestDistanceTolerance => 1e-4f;
+        private static tfloat closestDistanceTolerance => 1e-4f;
 
         // Tries to generate a manifold between a pair of faces.  It can fail in some cases due to numerical accuracy:
         // 1) both faces are nearly perpendicular to the normal
@@ -670,7 +671,7 @@ namespace ME.ECS.Essentials.Physics
         // In those cases, FaceFace() returns false and the caller should generate a contact from the closest points on the shapes.
         private static unsafe bool FaceFace(
             ref ConvexHull convexA, ref ConvexHull convexB, int faceIndexA, int faceIndexB, [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB,
-            float3 normal, sfloat distance, [NoAlias] ref Manifold manifold)
+            float3 normal, tfloat distance, [NoAlias] ref Manifold manifold)
         {
             // Get the plane of each face
             Plane planeA = convexA.Planes[faceIndexA];
@@ -678,9 +679,9 @@ namespace ME.ECS.Essentials.Physics
 
             // Handle cases where one of the faces is nearly perpendicular to the contact normal
             // This gets around divide by zero / numerical problems from dividing collider planes which often contain some error by a very small number, amplifying that error
-            sfloat cosMaxAngle = 0.05f;
-            sfloat dotA = math.dot(planeA.Normal, normal);
-            sfloat dotB = math.dot(planeB.Normal, normal);
+            tfloat cosMaxAngle = 0.05f;
+            tfloat dotA = math.dot(planeA.Normal, normal);
+            tfloat dotB = math.dot(planeB.Normal, normal);
             bool acceptB = true; // true if vertices of B projected onto the face of A are accepted
             if (dotA > -cosMaxAngle)
             {
@@ -727,14 +728,14 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // For each edge of A
-            sfloat invDotB = math.rcp(dotB);
-            sfloat sumRadii = convexA.ConvexRadius + convexB.ConvexRadius;
+            tfloat invDotB = math.rcp(dotB);
+            tfloat sumRadii = convexA.ConvexRadius + convexB.ConvexRadius;
             byte* indicesA = convexA.FaceVertexIndicesPtr + faceA.FirstIndex;
             float3* verticesA = convexA.VerticesPtr;
             for (EdgeIterator edgeA = EdgeIterator.Begin(verticesA, indicesA, -normal, faceA.NumVertices); edgeA.Valid(); edgeA.Advance())
             {
-                sfloat fracEnterA = 0.0f;
-                sfloat fracExitA = 1.0f;
+                tfloat fracEnterA = 0.0f;
+                tfloat fracExitA = 1.0f;
 
                 // For each edge of B
                 for (EdgeIterator edgeB = EdgeIterator.Begin(verticesBinA, null, normal, faceB.NumVertices); edgeB.Valid(); edgeB.Advance())
@@ -747,8 +748,8 @@ namespace ME.ECS.Essentials.Physics
                 // If edge A hits B, add a contact points
                 if (fracEnterA < fracExitA)
                 {
-                    sfloat distance0 = (math.dot(edgeA.Vertex0, planeB.Normal) + planeB.Distance) * invDotB;
-                    sfloat deltaDistance = math.dot(edgeA.Edge, planeB.Normal) * invDotB;
+                    tfloat distance0 = (math.dot(edgeA.Vertex0, planeB.Normal) + planeB.Distance) * invDotB;
+                    tfloat deltaDistance = math.dot(edgeA.Edge, planeB.Normal) * invDotB;
                     float3 vertexAOnB = edgeA.Vertex0 - normal * distance0;
                     float3 edgeAOnB = edgeA.Edge - normal * deltaDistance;
                     foundClosestPoint |= AddEdgeContact(vertexAOnB, edgeAOnB, distance0, deltaDistance, fracEnterA, normal, convexB.ConvexRadius, sumRadii, worldFromA, distance, ref manifold);
@@ -760,13 +761,13 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // For each vertex of B
-            sfloat invDotA = math.rcp(dotA);
+            tfloat invDotA = math.rcp(dotA);
             for (int i = 0; i < faceB.NumVertices; i++)
             {
                 if (validB[i] && manifold.NumContacts < Manifold.k_MaxNumContacts)
                 {
                     float3 vertexB = verticesBinA[i];
-                    sfloat distanceB = (math.dot(vertexB, planeA.Normal) + planeA.Distance) * -invDotA;
+                    tfloat distanceB = (math.dot(vertexB, planeA.Normal) + planeA.Distance) * -invDotA;
                     manifold[manifold.NumContacts++] = new ContactPoint
                     {
                         Position = Mul(worldFromA, vertexB) + manifold.Normal * convexB.ConvexRadius,
@@ -783,12 +784,12 @@ namespace ME.ECS.Essentials.Physics
         // In those cases, FaceEdge() returns false and the caller should generate a contact from the closest points on the shapes.
         private static unsafe bool FaceEdge(
             ref ConvexHull faceConvexA, ref ConvexHull edgeConvexB, int faceIndexA, [NoAlias] in MTransform worldFromA, [NoAlias] in MTransform aFromB,
-            float3 normal, sfloat distance, [NoAlias] ref Manifold manifold)
+            float3 normal, tfloat distance, [NoAlias] ref Manifold manifold)
         {
             // Check if the face is nearly perpendicular to the normal
-            sfloat cosMaxAngle = 0.05f;
+            tfloat cosMaxAngle = 0.05f;
             Plane planeA = faceConvexA.Planes[faceIndexA];
-            sfloat dotA = math.dot(planeA.Normal, normal);
+            tfloat dotA = math.dot(planeA.Normal, normal);
             if (math.abs(dotA) < cosMaxAngle)
             {
                 return false;
@@ -808,8 +809,8 @@ namespace ME.ECS.Essentials.Physics
 
             // For each edge of A
             float3* verticesA = faceConvexA.VerticesPtr;
-            sfloat fracEnterB = 0.0f;
-            sfloat fracExitB = 1.0f;
+            tfloat fracEnterB = 0.0f;
+            tfloat fracExitB = 1.0f;
             for (EdgeIterator edgeA = EdgeIterator.Begin(verticesA, indicesA, -normal, faceA.NumVertices); edgeA.Valid(); edgeA.Advance())
             {
                 // Cast edge B against plane A
@@ -819,10 +820,10 @@ namespace ME.ECS.Essentials.Physics
             // If edge B hits A, add a contact points
             if (fracEnterB < fracExitB)
             {
-                sfloat invDotA = math.rcp(dotA);
-                sfloat sumRadii = faceConvexA.ConvexRadius + edgeConvexB.ConvexRadius;
-                sfloat distance0 = (math.dot(vertexB0, planeA.Normal) + planeA.Distance) * -invDotA;
-                sfloat deltaDistance = math.dot(edgeB, planeA.Normal) * -invDotA;
+                tfloat invDotA = math.rcp(dotA);
+                tfloat sumRadii = faceConvexA.ConvexRadius + edgeConvexB.ConvexRadius;
+                tfloat distance0 = (math.dot(vertexB0, planeA.Normal) + planeA.Distance) * -invDotA;
+                tfloat deltaDistance = math.dot(edgeB, planeA.Normal) * -invDotA;
                 foundClosestPoint |= AddEdgeContact(vertexB0, edgeB, distance0, deltaDistance, fracEnterB, normal, edgeConvexB.ConvexRadius, sumRadii, worldFromA, distance, ref manifold);
                 foundClosestPoint |= AddEdgeContact(vertexB0, edgeB, distance0, deltaDistance, fracExitB, normal, edgeConvexB.ConvexRadius, sumRadii, worldFromA, distance, ref manifold);
             }
@@ -831,13 +832,13 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Adds a contact to the manifold from an edge and fraction
-        private static bool AddEdgeContact(float3 vertex0, float3 edge, sfloat distance0, sfloat deltaDistance, sfloat fraction, float3 normalInA, sfloat radiusB, sfloat sumRadii,
-            [NoAlias] in MTransform worldFromA, sfloat distanceThreshold, [NoAlias] ref Manifold manifold)
+        private static bool AddEdgeContact(float3 vertex0, float3 edge, tfloat distance0, tfloat deltaDistance, tfloat fraction, float3 normalInA, tfloat radiusB, tfloat sumRadii,
+            [NoAlias] in MTransform worldFromA, tfloat distanceThreshold, [NoAlias] ref Manifold manifold)
         {
             if (manifold.NumContacts < Manifold.k_MaxNumContacts)
             {
                 float3 position = vertex0 + fraction * edge;
-                sfloat distance = distance0 + fraction * deltaDistance;
+                tfloat distance = distance0 + fraction * deltaDistance;
 
                 manifold[manifold.NumContacts++] = new ContactPoint
                 {

@@ -1,9 +1,10 @@
 using Unity.Burst;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using static ME.ECS.Essentials.Physics.Math;
 
@@ -14,8 +15,8 @@ namespace ME.ECS.Essentials.Physics
     struct AngularLimit3DJacobian
     {
         // Relative angle limits
-        public sfloat MinAngle;
-        public sfloat MaxAngle;
+        public tfloat MinAngle;
+        public tfloat MaxAngle;
 
         // Relative orientation of motions before solving
         public quaternion BFromA;
@@ -24,20 +25,20 @@ namespace ME.ECS.Essentials.Physics
         public quaternion RefBFromA;
 
         // Error before solving
-        public sfloat InitialError;
+        public tfloat InitialError;
 
         // Fraction of the position error to correct per step
-        public sfloat Tau;
+        public tfloat Tau;
 
         // Fraction of the velocity error to correct per step
-        public sfloat Damping;
+        public tfloat Damping;
 
         // Build the Jacobian
         public void Build(
             MTransform aFromConstraint, MTransform bFromConstraint,
             MotionVelocity velocityA, MotionVelocity velocityB,
             MotionData motionA, MotionData motionB,
-            Constraint constraint, sfloat tau, sfloat damping)
+            Constraint constraint, tfloat tau, tfloat damping)
         {
             BFromA = math.mul(math.inverse(motionB.WorldFromMotion.rot), motionA.WorldFromMotion.rot);
             RefBFromA = new quaternion(math.mul(bFromConstraint.Rotation, aFromConstraint.InverseRotation));
@@ -47,11 +48,11 @@ namespace ME.ECS.Essentials.Physics
             Damping = damping;
 
             quaternion jointOrientation = math.mul(math.inverse(RefBFromA), BFromA);
-            sfloat initialAngle = math.asin(math.length(jointOrientation.value.xyz)) * 2.0f;
+            tfloat initialAngle = math.asin(math.length(jointOrientation.value.xyz)) * 2.0f;
             InitialError = JacobianUtilities.CalculateError(initialAngle, MinAngle, MaxAngle);
         }
 
-        public void Solve(ref MotionVelocity velocityA, ref MotionVelocity velocityB, sfloat timestep, sfloat invTimestep)
+        public void Solve(ref MotionVelocity velocityA, ref MotionVelocity velocityB, tfloat timestep, tfloat invTimestep)
         {
             // Predict the relative orientation at the end of the step
             quaternion futureBFromA = JacobianUtilities.IntegrateOrientationBFromA(BFromA, velocityA.AngularVelocity, velocityB.AngularVelocity, timestep);
@@ -59,16 +60,16 @@ namespace ME.ECS.Essentials.Physics
             // Find the future axis and angle of rotation between the free axes
             float3 jacA0, jacA1, jacA2, jacB0, jacB1, jacB2;
             float3 effectiveMass; // first column of 3x3 effective mass matrix, don't need the others because only jac0 can have nonzero error
-            sfloat futureAngle;
+            tfloat futureAngle;
             {
                 // Calculate the relative rotation between joint spaces
                 quaternion jointOrientation = math.mul(math.inverse(RefBFromA), futureBFromA);
 
                 // Find the axis and angle of rotation
                 jacA0 = jointOrientation.value.xyz;
-                sfloat sinHalfAngleSq = math.lengthsq(jacA0);
-                sfloat invSinHalfAngle = Math.RSqrtSafe(sinHalfAngleSq);
-                sfloat sinHalfAngle = sinHalfAngleSq * invSinHalfAngle;
+                tfloat sinHalfAngleSq = math.lengthsq(jacA0);
+                tfloat invSinHalfAngle = Math.RSqrtSafe(sinHalfAngleSq);
+                tfloat sinHalfAngle = sinHalfAngleSq * invSinHalfAngle;
                 futureAngle = math.asin(sinHalfAngle) * 2.0f;
 
                 jacA0 = math.select(jacA0 * invSinHalfAngle, new float3(1, 0, 0), invSinHalfAngle == 0.0f);
@@ -93,9 +94,9 @@ namespace ME.ECS.Essentials.Physics
             }
 
             // Calculate the error, adjust by tau and damping, and apply an impulse to correct it
-            sfloat futureError = JacobianUtilities.CalculateError(futureAngle, MinAngle, MaxAngle);
-            sfloat solveError = JacobianUtilities.CalculateCorrection(futureError, InitialError, Tau, Damping);
-            sfloat solveVelocity = -solveError * invTimestep;
+            tfloat futureError = JacobianUtilities.CalculateError(futureAngle, MinAngle, MaxAngle);
+            tfloat solveError = JacobianUtilities.CalculateCorrection(futureError, InitialError, Tau, Damping);
+            tfloat solveVelocity = -solveError * invTimestep;
             float3 impulseA = solveVelocity * (jacA0 * effectiveMass.x + jacA1 * effectiveMass.y + jacA2 * effectiveMass.z);
             float3 impulseB = solveVelocity * (jacB0 * effectiveMass.x + jacB1 * effectiveMass.y + jacB2 * effectiveMass.z);
             velocityA.ApplyAngularImpulse(impulseA);

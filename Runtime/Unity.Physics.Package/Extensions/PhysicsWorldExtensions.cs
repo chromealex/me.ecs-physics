@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics.Extensions
@@ -21,7 +22,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
             return filter;
         }
 
-        public static sfloat GetMass(this in PhysicsWorld world, int rigidBodyIndex)
+        public static tfloat GetMass(this in PhysicsWorld world, int rigidBodyIndex)
         {
             if (!(0 <= rigidBodyIndex && rigidBodyIndex < world.NumDynamicBodies)) return 0;
 
@@ -31,7 +32,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         }
 
         // Get the effective mass of a Rigid Body in a given direction and from a particular point (in World Space)
-        public static sfloat GetEffectiveMass(this in PhysicsWorld world, int rigidBodyIndex, float3 impulse, float3 point)
+        public static tfloat GetEffectiveMass(this in PhysicsWorld world, int rigidBodyIndex, float3 impulse, float3 point)
         {
             if (!(0 <= rigidBodyIndex && rigidBodyIndex < world.NumDynamicBodies)) return 0;
 
@@ -41,14 +42,14 @@ namespace ME.ECS.Essentials.Physics.Extensions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static sfloat GetEffectiveMassImpl(float3 centerOfMass, float3 inverseInertia, float3 impulse, float3 point)
+        internal static tfloat GetEffectiveMassImpl(float3 centerOfMass, float3 inverseInertia, float3 impulse, float3 point)
         {
             float3 pointDir = math.normalizesafe(point - centerOfMass);
             float3 impulseDir = math.normalizesafe(impulse);
 
             float3 jacobian = math.cross(pointDir, impulseDir);
-            sfloat invEffMass = math.csum(math.dot(jacobian, jacobian) * inverseInertia);
-            return math.select(1.0f / invEffMass, 0.0f, math.abs(invEffMass) < (sfloat)1e-5);
+            tfloat invEffMass = math.csum(math.dot(jacobian, jacobian) * inverseInertia);
+            return math.select(1.0f / invEffMass, 0.0f, math.abs(invEffMass) < (tfloat)1e-5);
         }
 
         // Get the Rigid Bodies Center of Mass (in World Space)
@@ -187,7 +188,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         // Calculate a linear and angular velocity required to move the given rigid body to the given target transform
         // in the given time step.
         public static void CalculateVelocityToTarget(
-            this PhysicsWorld world, int rigidBodyIndex, RigidTransform targetTransform, sfloat timestep,
+            this PhysicsWorld world, int rigidBodyIndex, RigidTransform targetTransform, tfloat timestep,
             out float3 requiredLinearVelocity, out float3 requiredAngularVelocity)
         {
             if (!(0 <= rigidBodyIndex && rigidBodyIndex < world.NumDynamicBodies))
@@ -208,7 +209,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void CalculateVelocityToTargetImpl(
             RigidTransform worldFromBody, quaternion motionFromWorld, float3 centerOfMass,
-            RigidTransform targetTransform, in sfloat stepFrequency,
+            RigidTransform targetTransform, in tfloat stepFrequency,
             out float3 requiredLinearVelocity, out float3 requiredAngularVelocity
         )
         {

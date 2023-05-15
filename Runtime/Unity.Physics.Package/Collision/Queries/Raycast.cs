@@ -1,9 +1,10 @@
 using ME.ECS;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -95,7 +96,7 @@ namespace ME.ECS.Essentials.Physics
         /// Fraction of the distance along the Ray where the hit occurred.
         /// </summary>
         /// <value> Returns a value between 0 and 1. </value>
-        public sfloat Fraction { get; set; }
+        public tfloat Fraction { get; set; }
 
         /// <summary>
         ///
@@ -149,17 +150,17 @@ namespace ME.ECS.Essentials.Physics
 
         public static bool RaySphere(
             float3 rayOrigin, float3 rayDisplacement,
-            float3 sphereCenter, sfloat sphereRadius,
-            ref sfloat fraction, out float3 normal)
+            float3 sphereCenter, tfloat sphereRadius,
+            ref tfloat fraction, out float3 normal)
         {
             normal = float3.zero;
 
-            // TODO.ma lots of sfloat inaccuracy problems with this
+            // TODO.ma lots of tfloat inaccuracy problems with this
             float3 diff = rayOrigin - sphereCenter;
-            sfloat a = math.dot(rayDisplacement, rayDisplacement);
-            sfloat b = 2.0f * math.dot(rayDisplacement, diff);
-            sfloat c = math.dot(diff, diff) - sphereRadius * sphereRadius;
-            sfloat discriminant = b * b - 4.0f * a * c;
+            tfloat a = math.dot(rayDisplacement, rayDisplacement);
+            tfloat b = 2.0f * math.dot(rayDisplacement, diff);
+            tfloat c = math.dot(diff, diff) - sphereRadius * sphereRadius;
+            tfloat discriminant = b * b - 4.0f * a * c;
 
             if (c < 0)
             {
@@ -174,12 +175,12 @@ namespace ME.ECS.Essentials.Physics
                 return false;
             }
 
-            sfloat sqrtDiscriminant = math.sqrt(discriminant);
-            sfloat invDenom = 0.5f / a;
+            tfloat sqrtDiscriminant = math.sqrt(discriminant);
+            tfloat invDenom = 0.5f / a;
 
-            sfloat t0 = (sqrtDiscriminant - b) * invDenom;
-            sfloat t1 = (-sqrtDiscriminant - b) * invDenom;
-            sfloat tMin = math.min(t0, t1);
+            tfloat t0 = (sqrtDiscriminant - b) * invDenom;
+            tfloat t1 = (-sqrtDiscriminant - b) * invDenom;
+            tfloat tMin = math.min(t0, t1);
 
             if (tMin >= 0 && tMin < fraction)
             {
@@ -194,22 +195,22 @@ namespace ME.ECS.Essentials.Physics
 
         public static bool RayCapsule(
             float3 rayOrigin, float3 rayDisplacement,
-            float3 vertex0, float3 vertex1, sfloat radius,
-            ref sfloat fraction, out float3 normal)
+            float3 vertex0, float3 vertex1, tfloat radius,
+            ref tfloat fraction, out float3 normal)
         {
-            sfloat axisLength = NormalizeWithLength(vertex1 - vertex0, out float3 axis);
+            tfloat axisLength = NormalizeWithLength(vertex1 - vertex0, out float3 axis);
 
             // Ray vs infinite cylinder
             {
-                sfloat directionDotAxis = math.dot(rayDisplacement, axis);
-                sfloat originDotAxis = math.dot(rayOrigin - vertex0, axis);
+                tfloat directionDotAxis = math.dot(rayDisplacement, axis);
+                tfloat originDotAxis = math.dot(rayOrigin - vertex0, axis);
                 float3 rayDisplacement2D = rayDisplacement - axis * directionDotAxis;
                 float3 rayOrigin2D = rayOrigin - axis * originDotAxis;
-                sfloat cylinderFraction = fraction;
+                tfloat cylinderFraction = fraction;
 
                 if (RaySphere(rayOrigin2D, rayDisplacement2D, vertex0, radius, ref cylinderFraction, out normal))
                 {
-                    sfloat t = originDotAxis + cylinderFraction * directionDotAxis; // distance of the hit from Vertex0 along axis
+                    tfloat t = originDotAxis + cylinderFraction * directionDotAxis; // distance of the hit from Vertex0 along axis
                     if (t >= 0.0f && t <= axisLength)
                     {
                         if (cylinderFraction == 0)
@@ -245,7 +246,7 @@ namespace ME.ECS.Essentials.Physics
         public static bool RayTriangle(
             float3 rayOrigin, float3 rayDisplacement,
             float3 a, float3 b, float3 c, // TODO: float3x3?
-            ref sfloat fraction, out float3 unnormalizedNormal)
+            ref tfloat fraction, out float3 unnormalizedNormal)
         {
             float3 vAb = b - a;
             float3 vCa = a - c;
@@ -254,8 +255,8 @@ namespace ME.ECS.Essentials.Physics
             float3 vAp = rayOrigin - a;
             float3 end0 = vAp + rayDisplacement * fraction;
 
-            sfloat d = math.dot(vN, vAp);
-            sfloat e = math.dot(vN, end0);
+            tfloat d = math.dot(vN, vAp);
+            tfloat e = math.dot(vN, end0);
 
             if (d * e >= 0)
             {
@@ -291,7 +292,7 @@ namespace ME.ECS.Essentials.Physics
         public static bool RayQuad(
             float3 rayOrigin, float3 rayDisplacement,
             float3 a, float3 b, float3 c, float3 d, // TODO: float3x4?
-            ref sfloat fraction, out float3 unnormalizedNormal)
+            ref tfloat fraction, out float3 unnormalizedNormal)
         {
             float3 vAb = b - a;
             float3 vCa = a - c;
@@ -300,8 +301,8 @@ namespace ME.ECS.Essentials.Physics
             float3 vAp = rayOrigin - a;
             float3 end0 = vAp + rayDisplacement * fraction;
 
-            sfloat nDotAp = math.dot(vN, vAp);
-            sfloat e = math.dot(vN, end0);
+            tfloat nDotAp = math.dot(vN, vAp);
+            tfloat e = math.dot(vN, end0);
 
             if (nDotAp * e >= 0)
             {
@@ -342,13 +343,13 @@ namespace ME.ECS.Essentials.Physics
 
         public static bool RayConvex(
             float3 rayOrigin, float3 rayDisplacement,
-            ref ConvexHull hull, ref sfloat fraction, out float3 normal)
+            ref ConvexHull hull, ref tfloat fraction, out float3 normal)
         {
             // TODO: Call RaySphere/Capsule/Triangle() if num vertices <= 3 ?
 
-            sfloat convexRadius = hull.ConvexRadius;
-            sfloat fracEnter = -1.0f;
-            sfloat fracExit = 2.0f;
+            tfloat convexRadius = hull.ConvexRadius;
+            tfloat fracEnter = -1.0f;
+            tfloat fracExit = 2.0f;
             float3 start = rayOrigin;
             float3 end = start + rayDisplacement * fraction;
             normal = new float3(1, 0, 0);
@@ -356,9 +357,9 @@ namespace ME.ECS.Essentials.Physics
             {
                 // Calculate the plane's hit fraction
                 Plane plane = hull.Planes[i];
-                sfloat startDistance = math.dot(start, plane.Normal) + plane.Distance - convexRadius;
-                sfloat endDistance = math.dot(end, plane.Normal) + plane.Distance - convexRadius;
-                sfloat newFraction = startDistance / (startDistance - endDistance);
+                tfloat startDistance = math.dot(start, plane.Normal) + plane.Distance - convexRadius;
+                tfloat endDistance = math.dot(end, plane.Normal) + plane.Distance - convexRadius;
+                tfloat newFraction = startDistance / (startDistance - endDistance);
                 bool startInside = (startDistance < 0);
                 bool endInside = (endDistance < 0);
 
@@ -411,7 +412,7 @@ namespace ME.ECS.Essentials.Physics
             }
 
             Material material = Material.Default;
-            sfloat fraction = collector.MaxFraction;
+            tfloat fraction = collector.MaxFraction;
             float3 normal;
             bool hadHit;
             switch (collider->Type)
@@ -506,7 +507,7 @@ namespace ME.ECS.Essentials.Physics
 
                 for (int polygonIndex = 0; polygonIndex < numPolygons; polygonIndex++)
                 {
-                    sfloat fraction = collector.MaxFraction;
+                    tfloat fraction = collector.MaxFraction;
                     bool hadHit;
                     if (isQuad)
                     {
@@ -636,7 +637,7 @@ namespace ME.ECS.Essentials.Physics
                         for (int iTriangle = 0; iTriangle < 2; iTriangle++)
                         {
                             // Cast
-                            sfloat fraction = collector.MaxFraction;
+                            tfloat fraction = collector.MaxFraction;
                             bool triangleHit = RayTriangle(input.Ray.Origin, input.Ray.Displacement, a, b, c, ref fraction, out float3 unnormalizedNormal);
 
                             if (triangleHit && fraction < collector.MaxFraction)

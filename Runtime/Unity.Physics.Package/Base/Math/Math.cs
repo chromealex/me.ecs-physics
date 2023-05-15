@@ -3,9 +3,10 @@ using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -25,16 +26,16 @@ namespace ME.ECS.Essentials.Physics
             public static float3 Max3F => new float3(float.MaxValue);
             public static float3 MaxDisplacement3F => new float3(float.MaxValue * 0.5f);
 
-            // Smallest sfloat such that 1.0 + eps != 1.0
+            // Smallest tfloat such that 1.0 + eps != 1.0
             // Different from float.Epsilon which is the smallest value greater than zero.
-            public static readonly sfloat Eps = 1.192092896e-07F;
+            public static readonly tfloat Eps = 1.192092896e-07F;
 
             // These constants are identical to the ones in the Unity Mathf library, to ensure identical behaviour
-            internal static readonly sfloat UnityEpsilonNormalSqrt = 1e-15F;
-            internal static readonly sfloat UnityEpsilon = 0.00001F;
+            internal static readonly tfloat UnityEpsilonNormalSqrt = 1e-15F;
+            internal static readonly tfloat UnityEpsilon = 0.00001F;
 
-            public static readonly sfloat Tau = 2.0f * math.PI;
-            public static readonly sfloat OneOverTau = 1.0f / Tau;
+            public static readonly tfloat Tau = 2.0f * math.PI;
+            public static readonly tfloat OneOverTau = 1.0f / Tau;
 
         }
 
@@ -70,41 +71,41 @@ namespace ME.ECS.Essentials.Physics
         public static int IndexOfMaxComponent(float4 v) => math.cmax(math.select(new int4(0, 1, 2, 3), new int4(-1), math.cmax(v) > v));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat HorizontalMul(float3 v) => v.x * v.y * v.z;
+        public static tfloat HorizontalMul(float3 v) => v.x * v.y * v.z;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat HorizontalMul(float4 v) => (v.x * v.y) * (v.z * v.w);
+        public static tfloat HorizontalMul(float4 v) => (v.x * v.y) * (v.z * v.w);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat Dotxyz1(float4 lhs, float3 rhs) => math.dot(lhs, new float4(rhs, 1));
+        public static tfloat Dotxyz1(float4 lhs, float3 rhs) => math.dot(lhs, new float4(rhs, 1));
 
         // [MethodImpl(MethodImplOptions.AggressiveInlining)]
         // public static double Dotxyz1(double4 lhs, double3 rhs) => math.dot(lhs, new double4(rhs, 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat Det(float3 a, float3 b, float3 c) => math.dot(math.cross(a, b), c); // TODO: use math.determinant()?
+        public static tfloat Det(float3 a, float3 b, float3 c) => math.dot(math.cross(a, b), c); // TODO: use math.determinant()?
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat RSqrtSafe(sfloat v) => math.select(math.rsqrt(v), 0.0f, math.abs(v) < 1e-10f);
+        public static tfloat RSqrtSafe(tfloat v) => math.select(math.rsqrt(v), 0.0f, math.abs(v) < 1e-10f);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ClampToMaxLength(sfloat maxLength, ref float3 vector)
+        public static void ClampToMaxLength(tfloat maxLength, ref float3 vector)
         {
-            sfloat lengthSq = math.lengthsq(vector);
+            tfloat lengthSq = math.lengthsq(vector);
             bool maxExceeded = lengthSq > maxLength * maxLength;
             if (maxExceeded)
             {
-                sfloat invLen = math.rsqrt(lengthSq);
+                tfloat invLen = math.rsqrt(lengthSq);
                 float3 rescaledVector = maxLength * invLen * vector;
                 vector = rescaledVector;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat NormalizeWithLength(float3 v, out float3 n)
+        public static tfloat NormalizeWithLength(float3 v, out float3 n)
         {
-            sfloat lengthSq = math.lengthsq(v);
-            sfloat invLength = math.rsqrt(lengthSq);
+            tfloat lengthSq = math.lengthsq(v);
+            tfloat invLength = math.rsqrt(lengthSq);
             n = v * invLength;
             return lengthSq * invLength;
         }
@@ -112,8 +113,8 @@ namespace ME.ECS.Essentials.Physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNormalized(float3 v)
         {
-            sfloat lenZero = math.lengthsq(v) - 1.0f;
-            sfloat absLenZero = math.abs(lenZero);
+            tfloat lenZero = math.lengthsq(v) - 1.0f;
+            tfloat absLenZero = math.abs(lenZero);
             return absLenZero < Constants.UnityEpsilon;
         }
 
@@ -131,7 +132,7 @@ namespace ME.ECS.Essentials.Physics
             float3 dir = math.select(dir1, dir0, cmp);
 
             // normalize and get the other direction
-            sfloat invLength = math.select(invLengths.z, invLengths.y, cmp);
+            tfloat invLength = math.select(invLengths.z, invLengths.y, cmp);
             p = dir * invLength;
             float3 cross = math.cross(v, dir);
             q = cross * invLength;
@@ -140,7 +141,7 @@ namespace ME.ECS.Essentials.Physics
         // Calculate the eigenvectors and eigenvalues of a symmetric 3x3 matrix
         public static void DiagonalizeSymmetricApproximation(float3x3 a, out float3x3 eigenVectors, out float3 eigenValues)
         {
-            sfloat GetMatrixElement(float3x3 m, int row, int col)
+            tfloat GetMatrixElement(float3x3 m, int row, int col)
             {
                 switch (col)
                 {
@@ -151,7 +152,7 @@ namespace ME.ECS.Essentials.Physics
                 }
             }
 
-            void SetMatrixElement(ref float3x3 m, int row, int col, sfloat x)
+            void SetMatrixElement(ref float3x3 m, int row, int col, tfloat x)
             {
                 switch (col)
                 {
@@ -163,16 +164,16 @@ namespace ME.ECS.Essentials.Physics
             }
 
             eigenVectors = float3x3.identity;
-            sfloat epsSq = 1e-14f * (math.lengthsq(a.c0) + math.lengthsq(a.c1) + math.lengthsq(a.c2));
+            tfloat epsSq = 1e-14f * (math.lengthsq(a.c0) + math.lengthsq(a.c1) + math.lengthsq(a.c2));
             const int maxIterations = 10;
             for (int iteration = 0; iteration < maxIterations; iteration++)
             {
                 // Find the row (p) and column (q) of the off-diagonal entry with greater magnitude
                 int p = 0, q = 1;
                 {
-                    sfloat maxEntry = math.abs(a.c1[0]);
-                    sfloat mag02 = math.abs(a.c2[0]);
-                    sfloat mag12 = math.abs(a.c2[1]);
+                    tfloat maxEntry = math.abs(a.c1[0]);
+                    tfloat mag02 = math.abs(a.c2[0]);
+                    tfloat mag12 = math.abs(a.c2[1]);
                     if (mag02 > maxEntry)
                     {
                         maxEntry = mag02;
@@ -196,9 +197,9 @@ namespace ME.ECS.Essentials.Physics
                 // Calculate jacobia rotation
                 float3x3 j = float3x3.identity;
                 {
-                    sfloat apq = GetMatrixElement(a, p, q);
-                    sfloat tau = (GetMatrixElement(a, q, q) - GetMatrixElement(a, p, p)) / (2.0f * apq);
-                    sfloat t = math.sqrt(1.0f + tau * tau);
+                    tfloat apq = GetMatrixElement(a, p, q);
+                    tfloat tau = (GetMatrixElement(a, q, q) - GetMatrixElement(a, p, p)) / (2.0f * apq);
+                    tfloat t = math.sqrt(1.0f + tau * tau);
                     if (tau > 0.0f)
                     {
                         t = 1.0f / (tau + t);
@@ -207,8 +208,8 @@ namespace ME.ECS.Essentials.Physics
                     {
                         t = 1.0f / (tau - t);
                     }
-                    sfloat c = math.rsqrt(1.0f + t * t);
-                    sfloat s = t * c;
+                    tfloat c = math.rsqrt(1.0f + t * t);
+                    tfloat s = t * c;
 
                     SetMatrixElement(ref j, p, p, c);
                     SetMatrixElement(ref j, q, q, c);
@@ -224,16 +225,16 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Returns the twist angle of the swing-twist decomposition of q about i, j, or k corresponding to index = 0, 1, or 2 respectively.
-        public static sfloat CalculateTwistAngle(quaternion q, int twistAxisIndex)
+        public static tfloat CalculateTwistAngle(quaternion q, int twistAxisIndex)
         {
             // q = swing * twist, twist = normalize(twistAxis * twistAxis dot q.xyz, q.w)
-            sfloat dot = q.value[twistAxisIndex];
-            sfloat w = q.value.w;
-            sfloat lengthSq = dot * dot + w * w;
-            sfloat invLength = RSqrtSafe(lengthSq);
-            sfloat sinHalfAngle = dot * invLength;
-            sfloat cosHalfAngle = w * invLength;
-            sfloat halfAngle = math.atan2(sinHalfAngle, cosHalfAngle);
+            tfloat dot = q.value[twistAxisIndex];
+            tfloat w = q.value.w;
+            tfloat lengthSq = dot * dot + w * w;
+            tfloat invLength = RSqrtSafe(lengthSq);
+            tfloat sinHalfAngle = dot * invLength;
+            tfloat cosHalfAngle = w * invLength;
+            tfloat halfAngle = math.atan2(sinHalfAngle, cosHalfAngle);
             return halfAngle + halfAngle;
         }
 
@@ -244,9 +245,9 @@ namespace ME.ECS.Essentials.Physics
             Assert.IsTrue(math.abs(math.lengthsq(to) - 1.0f) < 1e-4f);
             float3 cross = math.cross(from, to);
             CalculatePerpendicularNormalized(from, out float3 safeAxis, out float3 unused); // for when angle ~= 180
-            sfloat dot = math.dot(from, to);
+            tfloat dot = math.dot(from, to);
             float3 squares = new float3(0.5f - new float2(dot, -dot) * 0.5f, math.lengthsq(cross));
-            float3 inverses = math.select(math.rsqrt(squares), (sfloat)0.0f, squares < 1e-10f);
+            float3 inverses = math.select(math.rsqrt(squares), (tfloat)0.0f, squares < 1e-10f);
             float2 sinCosHalfAngle = squares.xy * inverses.xy;
             float3 axis = math.select(cross * inverses.z, safeAxis, squares.z < 1e-10f);
             return new quaternion(new float4(axis * sinCosHalfAngle.x, sinCosHalfAngle.y));
@@ -257,7 +258,7 @@ namespace ME.ECS.Essentials.Physics
         #region toEuler
         static float3 toEuler(quaternion q, math.RotationOrder order = math.RotationOrder.Default)
         {
-            sfloat epsilon = 1e-6f;
+            tfloat epsilon = 1e-6f;
 
             //prepare the data
             var qv = q.value;
@@ -266,7 +267,7 @@ namespace ME.ECS.Essentials.Physics
             var d3 = qv * qv;
             var euler = new float3(0.0f);
 
-            sfloat CUTOFF = (1.0f - 2.0f * epsilon) * (1.0f - 2.0f * epsilon);
+            tfloat CUTOFF = (1.0f - 2.0f * epsilon) * (1.0f - 2.0f * epsilon);
 
             switch (order)
             {
@@ -446,7 +447,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Returns the angle in degrees between /from/ and /to/. This is always the smallest
-        internal static sfloat Angle(float3 from, float3 to)
+        internal static tfloat Angle(float3 from, float3 to)
         {
             // sqrt(a) * sqrt(b) = sqrt(a * b) -- valid for real numbers
             var denominator = math.sqrt(math.lengthsq(from) * math.lengthsq(to));
@@ -460,7 +461,7 @@ namespace ME.ECS.Essentials.Physics
         // The smaller of the two possible angles between the two vectors is returned, therefore the result will never be greater than 180 degrees or smaller than -180 degrees.
         // If you imagine the from and to vectors as lines on a piece of paper, both originating from the same point, then the /axis/ vector would point up out of the paper.
         // The measured angle between the two vectors would be positive in a clockwise direction and negative in an anti-clockwise direction.
-        internal static sfloat SignedAngle(float3 from, float3 to, float3 axis)
+        internal static tfloat SignedAngle(float3 from, float3 to, float3 axis)
         {
             var unsignedAngle = Angle(from, to);
             var sign = math.sign(math.dot(math.cross(from, to), axis));

@@ -2,9 +2,10 @@ using System.Diagnostics;
 using Unity.Burst;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using static ME.ECS.Essentials.Physics.Math;
 
@@ -51,7 +52,7 @@ namespace ME.ECS.Essentials.Physics
         {
             public SupportVertex A, B, C, D;
             public float3 Direction; // Points from the origin towards the closest point on the simplex
-            public sfloat ScaledDistance; // ClosestPoint = Direction * ScaledDistance / lengthSq(Direction)
+            public tfloat ScaledDistance; // ClosestPoint = Direction * ScaledDistance / lengthSq(Direction)
             public int NumVertices;
 
             /// <summary>
@@ -73,8 +74,8 @@ namespace ME.ECS.Essentials.Physics
                     case 2:
                     {
                         float3 delta = B.Xyz - A.Xyz;
-                        sfloat den = math.dot(delta, delta);
-                        sfloat num = math.dot(-A.Xyz, delta);
+                        tfloat den = math.dot(delta, delta);
+                        tfloat num = math.dot(-A.Xyz, delta);
 
                         // Reduce if closest point do not project on the line segment.
                         if (num >= den) { NumVertices = 1; A = B; goto case 1; }
@@ -95,8 +96,8 @@ namespace ME.ECS.Essentials.Physics
                         // Reduce if closest point do not project in the triangle.
                         float3 crossA = math.cross(cb, n);
                         float3 crossB = math.cross(n, ca);
-                        sfloat detA = math.dot(crossA, B.Xyz);
-                        sfloat detB = math.dot(crossB, C.Xyz);
+                        tfloat detA = math.dot(crossA, B.Xyz);
+                        tfloat detB = math.dot(crossB, C.Xyz);
                         if (detA < 0)
                         {
                             if (detB >= 0 || Det(n, crossA, C.Xyz) < 0)
@@ -106,7 +107,7 @@ namespace ME.ECS.Essentials.Physics
                         }
                         else if (detB >= 0)
                         {
-                            sfloat dot = math.dot(C.Xyz, n);
+                            tfloat dot = math.dot(C.Xyz, n);
                             if (dot < 0)
                             {
                                 // Reorder vertices so that n points away from the origin
@@ -134,7 +135,7 @@ namespace ME.ECS.Essentials.Physics
 
                         // This routine finds the closest feature to the origin on the tetra by testing the origin against the planes of the
                         // voronoi diagram. If the origin is near the border of two regions in the diagram, then the plane tests might exclude
-                        // it from both because of sfloat rounding.  To avoid this problem we use some tolerance testing the face planes and let
+                        // it from both because of tfloat rounding.  To avoid this problem we use some tolerance testing the face planes and let
                         // EPA handle those border cases.  1e-5 is a somewhat arbitrary value and the actual distance scales with the tetra, so
                         // this might need to be tuned later!
                         float3 faceTest = tetra.Cross(tetra.V1203).Dot(d).xyz;
@@ -183,7 +184,7 @@ namespace ME.ECS.Essentials.Physics
                         coordinates.x = 1;
                         break;
                     case 2:
-                        sfloat distance = math.distance(A.Xyz, B.Xyz);
+                        tfloat distance = math.distance(A.Xyz, B.Xyz);
                         UnityEngine.Assertions.Assert.AreNotEqual(distance, 0.0f); // TODO just checking if this happens in my tests
                         if (distance == 0.0f) // Very rare case, simplex is really 1D.
                         {
@@ -197,8 +198,8 @@ namespace ME.ECS.Essentials.Physics
                         coordinates.x = math.length(math.cross(B.Xyz - closestPoint, C.Xyz - closestPoint));
                         coordinates.y = math.length(math.cross(C.Xyz - closestPoint, A.Xyz - closestPoint));
                         coordinates.z = math.length(math.cross(A.Xyz - closestPoint, B.Xyz - closestPoint));
-                        sfloat sum = math.csum(coordinates.xyz);
-                        if (sum == 0.0f) // Very rare case, simplex is really 2D.  Happens because of int->sfloat conversion from the hull builder.
+                        tfloat sum = math.csum(coordinates.xyz);
+                        if (sum == 0.0f) // Very rare case, simplex is really 2D.  Happens because of int->tfloat conversion from the hull builder.
                         {
                             // Choose the two farthest apart vertices to keep
                             float3 lengthsSq = new float3(math.lengthsq(A.Xyz - B.Xyz), math.lengthsq(B.Xyz - C.Xyz), math.lengthsq(C.Xyz - A.Xyz));
@@ -225,7 +226,7 @@ namespace ME.ECS.Essentials.Physics
                         coordinates.y = Det(D.Xyz, A.Xyz, C.Xyz);
                         coordinates.z = Det(D.Xyz, B.Xyz, A.Xyz);
                         coordinates.w = Det(A.Xyz, B.Xyz, C.Xyz);
-                        sfloat sum = math.csum(coordinates.xyzw);
+                        tfloat sum = math.csum(coordinates.xyzw);
                         UnityEngine.Assertions.Assert.AreNotEqual(sum, 0.0f); // TODO just checking that this doesn't happen in my tests
                         if (sum == 0.0f) // Unexpected case, may introduce significant error by dropping a vertex but it's better than nan
                         {
@@ -254,8 +255,8 @@ namespace ME.ECS.Essentials.Physics
             float3* verticesA, int numVerticesA, float3* verticesB, int numVerticesB,
             [NoAlias] in MTransform aFromB, PenetrationHandling penetrationHandling)
         {
-            sfloat epsTerminationSq = 1e-8f; // Main loop quits when it cannot find a point that improves the simplex by at least this much
-            sfloat epsPenetrationSq = 1e-9f; // Epsilon used to check for penetration.  Should be smaller than shape cast ConvexConvex keepDistance^2.
+            tfloat epsTerminationSq = 1e-8f; // Main loop quits when it cannot find a point that improves the simplex by at least this much
+            tfloat epsPenetrationSq = 1e-9f; // Epsilon used to check for penetration.  Should be smaller than shape cast ConvexConvex keepDistance^2.
 
             // Initialize simplex.
             Simplex simplex = new Simplex();
@@ -263,7 +264,7 @@ namespace ME.ECS.Essentials.Physics
             simplex.A = GetSupportingVertex(new float3(1, 0, 0), verticesA, numVerticesA, verticesB, numVerticesB, aFromB);
             simplex.Direction = simplex.A.Xyz;
             simplex.ScaledDistance = math.lengthsq(simplex.A.Xyz);
-            sfloat scaleSq = simplex.ScaledDistance;
+            tfloat scaleSq = simplex.ScaledDistance;
 
             // Iterate.
             int iteration = 0;
@@ -275,7 +276,7 @@ namespace ME.ECS.Essentials.Physics
                 SupportVertex newSv = GetSupportingVertex(-simplex.Direction, verticesA, numVerticesA, verticesB, numVerticesB, aFromB);
 
                 // If the new vertex is not significantly closer to the origin, quit
-                sfloat scaledImprovement = math.dot(simplex.A.Xyz - newSv.Xyz, simplex.Direction);
+                tfloat scaledImprovement = math.dot(simplex.A.Xyz - newSv.Xyz, simplex.Direction);
                 if (scaledImprovement * math.abs(scaledImprovement) < epsTerminationSq * scaleSq)
                 {
                     break;
@@ -292,7 +293,7 @@ namespace ME.ECS.Essentials.Physics
 
                 // Check for penetration
                 scaleSq = math.lengthsq(simplex.Direction);
-                sfloat scaledDistanceSq = simplex.ScaledDistance * simplex.ScaledDistance;
+                tfloat scaledDistanceSq = simplex.ScaledDistance * simplex.ScaledDistance;
                 if (simplex.NumVertices == 4 || scaledDistanceSq <= epsPenetrationSq * scaleSq)
                 {
                     penetration = true;
@@ -312,7 +313,7 @@ namespace ME.ECS.Essentials.Physics
                 ConvexHullBuilder.Vertex* vertices = stackalloc ConvexHullBuilder.Vertex[verticesCapacity];
                 ConvexHullBuilder.Triangle* triangles = stackalloc ConvexHullBuilder.Triangle[triangleCapacity];
                 Aabb domain = GetSupportingAabb(verticesA, numVerticesA, verticesB, numVerticesB, aFromB);
-                sfloat simplificationTolerance = 0.0f;
+                tfloat simplificationTolerance = 0.0f;
                 var hull = new ConvexHullBuilder(verticesCapacity, vertices, triangles, null,
                     domain, simplificationTolerance, ConvexHullBuilder.IntResolution.Low);
 
@@ -435,14 +436,14 @@ namespace ME.ECS.Essentials.Physics
                         {
                             UnityEngine.Assertions.Assert.IsTrue(simplex.NumVertices == 3);
                             float3 cross = math.cross(simplex.B.Xyz - simplex.A.Xyz, simplex.C.Xyz - simplex.A.Xyz);
-                            sfloat crossLengthSq = math.lengthsq(cross);
+                            tfloat crossLengthSq = math.lengthsq(cross);
                             if (crossLengthSq < 1e-8f) // hull builder can accept extremely thin triangles for which we cannot compute an accurate normal
                             {
                                 simplex.NumVertices = 2;
                                 goto case 2;
                             }
                             float3 normal = cross * math.rsqrt(crossLengthSq);
-                            sfloat dot = math.dot(normal, simplex.A.Xyz);
+                            tfloat dot = math.dot(normal, simplex.A.Xyz);
                             ret.ClosestPoints.Distance = math.abs(dot);
                             ret.ClosestPoints.NormalInA = math.select(-normal, normal, dot < 0);
                             break;
@@ -453,13 +454,13 @@ namespace ME.ECS.Essentials.Physics
                 {
                     int closestTriangleIndex;
                     Plane closestPlane = new Plane();
-                    sfloat stopThreshold = 1e-4f;
+                    tfloat stopThreshold = 1e-4f;
                     uint* uidsCache = stackalloc uint[triangleCapacity];
                     for (int i = 0; i < triangleCapacity; i++)
                     {
                         uidsCache[i] = 0;
                     }
-                    sfloat* distancesCache = stackalloc sfloat[triangleCapacity];
+                    tfloat* distancesCache = stackalloc tfloat[triangleCapacity];
                     do
                     {
                         // Select closest triangle.
@@ -480,7 +481,7 @@ namespace ME.ECS.Essentials.Physics
 
                         // Add supporting vertex or exit.
                         SupportVertex sv = GetSupportingVertex(closestPlane.Normal, verticesA, numVerticesA, verticesB, numVerticesB, aFromB);
-                        sfloat d2P = math.dot(closestPlane.Normal, sv.Xyz) + closestPlane.Distance;
+                        tfloat d2P = math.dot(closestPlane.Normal, sv.Xyz) + closestPlane.Distance;
                         if (math.abs(d2P) > stopThreshold && hull.AddPoint(sv.Xyz, sv.Id))
                             stopThreshold *= 1.3f;
                         else
@@ -534,8 +535,8 @@ namespace ME.ECS.Essentials.Physics
             else
             {
                 // Compute distance and normal.
-                sfloat lengthSq = math.lengthsq(simplex.Direction);
-                sfloat invLength = math.rsqrt(lengthSq);
+                tfloat lengthSq = math.lengthsq(simplex.Direction);
+                tfloat invLength = math.rsqrt(lengthSq);
                 bool smallLength = lengthSq == 0;
                 ret.ClosestPoints.Distance = math.select(simplex.ScaledDistance * invLength, 0.0f, smallLength);
                 ret.ClosestPoints.NormalInA = math.select(simplex.Direction * invLength, new float3(1, 0, 0), smallLength);
@@ -571,10 +572,10 @@ namespace ME.ECS.Essentials.Physics
         private static unsafe int GetSupportingVertexIndex(float3 direction, float3* vertices, int numVertices)
         {
             int maxI = -1;
-            sfloat maxD = 0;
+            tfloat maxD = 0;
             for (int i = 0; i < numVertices; ++i)
             {
-                sfloat d = math.dot(direction, vertices[i]);
+                tfloat d = math.dot(direction, vertices[i]);
                 if (maxI == -1 || d > maxD)
                 {
                     maxI = i;

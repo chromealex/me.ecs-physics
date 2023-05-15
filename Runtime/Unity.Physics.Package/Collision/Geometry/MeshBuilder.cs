@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -53,7 +54,7 @@ namespace ME.ECS.Essentials.Physics
             int stackSize = 1;
             nodesIndexStack[0] = 1;
 
-            sfloat uniqueVerticesPerPrimitiveFactor = 1.5f;
+            tfloat uniqueVerticesPerPrimitiveFactor = 1.5f;
 
             var primitivesCountInSubTree = ProducedPrimitivesCountPerSubTree(nodes, nodeCount);
 
@@ -95,8 +96,8 @@ namespace ME.ECS.Essentials.Physics
                     }
                 }
 
-                sfloat tempUniqueVertexPrimitiveFactor = 1.0f;
-                sfloat factorStepIncrement = 0.25f;
+                tfloat tempUniqueVertexPrimitiveFactor = 1.0f;
+                tfloat factorStepIncrement = 0.25f;
 
                 while (subTreeIndices.Length > 0)
                 {
@@ -339,7 +340,7 @@ namespace ME.ECS.Essentials.Physics
 
     internal struct MeshConnectivityBuilder
     {
-        sfloat k_MergeCoplanarTrianglesTolerance => 1e-4f;
+        tfloat k_MergeCoplanarTrianglesTolerance => 1e-4f;
 
         internal NativeArray<Vertex> Vertices;
         internal NativeArray<Triangle> Triangles;
@@ -597,7 +598,7 @@ namespace ME.ECS.Essentials.Physics
             uint x, y, z;
             unsafe
             {
-                sfloat* tmp = &vertex.x;
+                tfloat* tmp = &vertex.x;
                 x = *((uint*)tmp);
 
                 tmp = &vertex.y;
@@ -682,7 +683,7 @@ namespace ME.ECS.Essentials.Physics
 
         public static bool IsTriangleDegenerate(float3 a, float3 b, float3 c)
         {
-            sfloat defaultTriangleDegeneracyTolerance = 1e-7f;
+            tfloat defaultTriangleDegeneracyTolerance = 1e-7f;
 
             // Small area check
             {
@@ -707,13 +708,13 @@ namespace ME.ECS.Essentials.Physics
                 float3 q = a - b;
                 float3 r = c - b;
 
-                sfloat qq = math.dot(q, q);
-                sfloat rr = math.dot(r, r);
-                sfloat qr = math.dot(q, r);
+                tfloat qq = math.dot(q, q);
+                tfloat rr = math.dot(r, r);
+                tfloat qr = math.dot(q, r);
 
-                sfloat qqrr = qq * rr;
-                sfloat qrqr = qr * qr;
-                sfloat det = (qqrr - qrqr);
+                tfloat qqrr = qq * rr;
+                tfloat qrqr = qr * qr;
+                tfloat det = (qqrr - qrqr);
 
                 return det == 0.0f;
             }
@@ -886,7 +887,7 @@ namespace ME.ECS.Essentials.Physics
         private struct EdgeData : IComparable<EdgeData>
         {
             internal Edge Edge;
-            internal sfloat Value;
+            internal tfloat Value;
 
             public int CompareTo(EdgeData other)
             {
@@ -911,7 +912,7 @@ namespace ME.ECS.Essentials.Physics
             return triangles[triangleIndex][(edge.Start + 2) % 3];
         }
 
-        private static sfloat CalcTwiceSurfaceArea(float3 a, float3 b, float3 c)
+        private static tfloat CalcTwiceSurfaceArea(float3 a, float3 b, float3 c)
         {
             float3 d0 = b - a;
             float3 d1 = c - a;
@@ -957,11 +958,11 @@ namespace ME.ECS.Essentials.Physics
                     float3x4 quadVertices = new float3x4(vertices[vis[0]], vertices[vis[1]], vertices[vis[2]], vertices[vis[3]]);
                     Aabb quadAabb = Aabb.CreateFromPoints(quadVertices);
 
-                    sfloat aabbSurfaceArea = quadAabb.SurfaceArea;
+                    tfloat aabbSurfaceArea = quadAabb.SurfaceArea;
 
                     if (aabbSurfaceArea > Math.Constants.Eps)
                     {
-                        sfloat quadSurfaceArea = CalcTwiceSurfaceArea(quadVertices[0], quadVertices[1], quadVertices[2]) + CalcTwiceSurfaceArea(quadVertices[0], quadVertices[1], quadVertices[3]);
+                        tfloat quadSurfaceArea = CalcTwiceSurfaceArea(quadVertices[0], quadVertices[1], quadVertices[2]) + CalcTwiceSurfaceArea(quadVertices[0], quadVertices[1], quadVertices[3]);
                         edgeData.Value = (aabbSurfaceArea - quadSurfaceArea) / aabbSurfaceArea;
                         edgeData.Edge = vis[0] < vis[1] ? e : linkEdge;
                     }

@@ -6,7 +6,7 @@ using ME.ECS.Essentials.Physics.Components;
 using ME.ECS.Mathematics;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
@@ -231,7 +231,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                 var hasChunkPhysicsMassOverrideType = this.bagMotion.HasT3(index);
                 
                 // Note: if a dynamic body infinite mass then assume no gravity should be applied
-                sfloat defaultGravityFactor = hasChunkPhysicsMassType ? 1 : 0;
+                tfloat defaultGravityFactor = hasChunkPhysicsMassType ? 1 : 0;
 
                 var isKinematic = !hasChunkPhysicsMassType || hasChunkPhysicsMassOverrideType && chunkMassOverride.IsKinematic != 0;
                 this.motionVelocities[index] = new ME.ECS.Essentials.Physics.MotionVelocity {

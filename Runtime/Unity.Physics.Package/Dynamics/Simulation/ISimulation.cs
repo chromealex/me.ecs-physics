@@ -3,9 +3,10 @@ using Unity.Collections;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -22,7 +23,7 @@ namespace ME.ECS.Essentials.Physics
     public struct SimulationStepInput
     {
         public PhysicsWorld World; // Physics world to be stepped
-        public sfloat TimeStep; // Portion of time to step the physics world for
+        public tfloat TimeStep; // Portion of time to step the physics world for
         public float3 Gravity; // Gravity in the physics world
         public int NumSolverIterations; // Number of iterations to perform while solving constraints
         public bool SynchronizeCollisionWorld; // Whether to update the collision world after the step for more precise queries

@@ -1,9 +1,10 @@
 using ME.ECS.Essentials.Physics.Components;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using FloatRange = ME.ECS.Essentials.Physics.Math.FloatRange;
 
@@ -102,7 +103,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         /// </summary>
         /// <param name="maxConeAngle">Half angle of the primary cone, which defines the maximum possible range of motion in which the primary axis is restricted.</param>
         /// <param name="angularTwistRange">The range of angular motion for twisting around the primary axis within the region defined by the primary and perpendicular cones. This range is usually symmetrical.</param>
-        public static void GetRagdollPrimaryConeAndTwistRange(in this PhysicsJoint joint, out sfloat maxConeAngle, out FloatRange angularTwistRange)
+        public static void GetRagdollPrimaryConeAndTwistRange(in this PhysicsJoint joint, out tfloat maxConeAngle, out FloatRange angularTwistRange)
         {
             maxConeAngle = joint[PhysicsJoint.k_RagdollPrimaryMaxConeIndex].Max;
             angularTwistRange = new FloatRange
@@ -117,7 +118,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         /// </summary>
         /// <param name="maxConeAngle">Half angle of the primary cone, which defines the maximum possible range of motion in which the primary axis is restricted. This value is clamped to the range (-pi, pi).</param>
         /// <param name="angularTwistRange">The range of angular motion for twisting around the primary axis within the region defined by the primary and perpendicular cones. This range is usually symmetrical, and is clamped to the range (-pi, pi).</param>
-        public static void SetRagdollPrimaryConeAndTwistRange(ref this PhysicsJoint joint, sfloat maxConeAngle, FloatRange angularTwistRange)
+        public static void SetRagdollPrimaryConeAndTwistRange(ref this PhysicsJoint joint, tfloat maxConeAngle, FloatRange angularTwistRange)
         {
             angularTwistRange = math.clamp(angularTwistRange, new float2(-math.PI), new float2(math.PI));
             var constraints = joint.GetConstraints();

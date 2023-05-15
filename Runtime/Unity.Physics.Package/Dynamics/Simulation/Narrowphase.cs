@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -15,7 +16,7 @@ namespace ME.ECS.Essentials.Physics
     public static class NarrowPhase
     {
         // Iterates the provided dispatch pairs and creates contacts and based on them.
-        public static void CreateContacts(ref PhysicsWorld world, NativeArray<DispatchPairSequencer.DispatchPair> dispatchPairs, sfloat timeStep,
+        public static void CreateContacts(ref PhysicsWorld world, NativeArray<DispatchPairSequencer.DispatchPair> dispatchPairs, tfloat timeStep,
             ref NativeStream.Writer contactsWriter)
         {
             contactsWriter.BeginForEachIndex(0);
@@ -26,7 +27,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Schedules a set of jobs to iterate the provided dispatch pairs and create contacts based on them.
-        internal static SimulationJobHandles ScheduleCreateContactsJobs(ref PhysicsWorld world, sfloat timeStep,
+        internal static SimulationJobHandles ScheduleCreateContactsJobs(ref PhysicsWorld world, tfloat timeStep,
             ref NativeStream contacts, ref NativeStream jacobians, ref NativeList<DispatchPairSequencer.DispatchPair> dispatchPairs,
             JobHandle inputDeps, ref DispatchPairSequencer.SolverSchedulerInfo solverSchedulerInfo, bool multiThreaded = true)
         {
@@ -71,7 +72,7 @@ namespace ME.ECS.Essentials.Physics
         struct ParallelCreateContactsJob : IJobParallelForDefer
         {
             [NoAlias, ReadOnly] public PhysicsWorld World;
-            [ReadOnly] public sfloat TimeStep;
+            [ReadOnly] public tfloat TimeStep;
             [ReadOnly] public NativeArray<DispatchPairSequencer.DispatchPair> DispatchPairs;
             [NoAlias] public NativeStream.Writer ContactsWriter;
             [NoAlias, ReadOnly] public DispatchPairSequencer.SolverSchedulerInfo SolverSchedulerInfo;
@@ -87,7 +88,7 @@ namespace ME.ECS.Essentials.Physics
                 ContactsWriter.EndForEachIndex();
             }
 
-            internal static unsafe void ExecuteImpl(ref PhysicsWorld world, sfloat timeStep,
+            internal static unsafe void ExecuteImpl(ref PhysicsWorld world, tfloat timeStep,
                 NativeArray<DispatchPairSequencer.DispatchPair> dispatchPairs,
                 int dispatchPairReadOffset, int numPairsToRead, ref NativeStream.Writer contactWriter)
             {
@@ -128,7 +129,7 @@ namespace ME.ECS.Essentials.Physics
         struct CreateContactsJob : IJob
         {
             [NoAlias, ReadOnly] public PhysicsWorld World;
-            [ReadOnly] public sfloat TimeStep;
+            [ReadOnly] public tfloat TimeStep;
             [ReadOnly] public NativeArray<DispatchPairSequencer.DispatchPair> DispatchPairs;
             [NoAlias] public NativeStream.Writer ContactsWriter;
 

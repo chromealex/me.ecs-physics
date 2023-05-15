@@ -2,9 +2,10 @@ using ME.ECS.Essentials.Physics.Components;
 using ME.ECS.Transform;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics.Extensions
@@ -38,7 +39,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         /// <param name="impulse">An impulse in world space.</param>
         /// <param name="point">A point in world space.</param>
         /// <returns>A body's effective mass with respect to the specified point and impulse.</returns>
-        public static sfloat GetEffectiveMass(in this PhysicsMass bodyMass, in Position bodyPosition, in Rotation bodyOrientation, float3 impulse, float3 point) =>
+        public static tfloat GetEffectiveMass(in this PhysicsMass bodyMass, in Position bodyPosition, in Rotation bodyOrientation, float3 impulse, float3 point) =>
             PhysicsWorldExtensions.GetEffectiveMassImpl(GetCenterOfMassWorldSpace(bodyMass, bodyPosition, bodyOrientation), bodyMass.InverseInertia, impulse, point);
 
         /// <summary>
@@ -118,7 +119,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         /// <param name="timestep">The change in time from the current to the next frame.</param>
         /// <param name="impulse">A returned impulse proportional to the provided 'force' and based on the supplied 'mode'.</param>
         /// <param name="impulseMass">A returned PhysicsMass component to be passed to an Apply function.</param>
-        public static void GetImpulseFromForce(in this PhysicsMass bodyMass, in float3 force, in ForceMode mode, in sfloat timestep, out float3 impulse, out PhysicsMass impulseMass)
+        public static void GetImpulseFromForce(in this PhysicsMass bodyMass, in float3 force, in ForceMode mode, in tfloat timestep, out float3 impulse, out PhysicsMass impulseMass)
         {
             var unitMass = new PhysicsMass { InverseInertia = new float3(1.0f), InverseMass = 1.0f, Transform = bodyMass.Transform };
 
@@ -171,9 +172,9 @@ namespace ME.ECS.Essentials.Physics.Extensions
         public static void ApplyExplosionForce(
             ref this PhysicsVelocity bodyVelocity, in PhysicsMass bodyMass, in PhysicsCollider bodyCollider,
             in ME.ECS.Transform.Position bodyPosition, in Rotation bodyOrientation,
-            sfloat explosionForce, in float3 explosionPosition, in sfloat explosionRadius,
-            in sfloat timestep, in float3 up, in CollisionFilter explosionFilter,
-            in sfloat upwardsModifier, ForceMode mode = ForceMode.Force)
+            tfloat explosionForce, in float3 explosionPosition, in tfloat explosionRadius,
+            in tfloat timestep, in float3 up, in CollisionFilter explosionFilter,
+            in tfloat upwardsModifier, ForceMode mode = ForceMode.Force)
         {
             var worldFromBody = new RigidTransform(bodyOrientation.value, bodyPosition.value);
 
@@ -240,9 +241,9 @@ namespace ME.ECS.Essentials.Physics.Extensions
         public static void ApplyExplosionForce(
             ref this PhysicsVelocity bodyVelocity, in PhysicsMass bodyMass, in PhysicsCollider bodyCollider,
             in ME.ECS.Transform.Position bodyPosition, in Rotation bodyOrientation,
-            sfloat explosionForce, in float3 explosionPosition, in sfloat explosionRadius,
-            in sfloat timestep, in float3 up,
-            in sfloat upwardsModifier, ForceMode mode = ForceMode.Force)
+            tfloat explosionForce, in float3 explosionPosition, in tfloat explosionRadius,
+            in tfloat timestep, in float3 up,
+            in tfloat upwardsModifier, ForceMode mode = ForceMode.Force)
         {
             bodyVelocity.ApplyExplosionForce(bodyMass, bodyCollider, bodyPosition, bodyOrientation, explosionForce,
                 explosionPosition, explosionRadius, timestep, up, CollisionFilter.Default, upwardsModifier, mode);
@@ -284,7 +285,7 @@ namespace ME.ECS.Essentials.Physics.Extensions
         /// <param name="position">The future position of the body.</param>
         /// <param name="orientation">The future orientation of the body.</param>
         public static void Integrate(
-            this in PhysicsVelocity physicsVelocity, in PhysicsMass physicsMass, sfloat timestep,
+            this in PhysicsVelocity physicsVelocity, in PhysicsMass physicsMass, tfloat timestep,
             ref float3 position, ref quaternion orientation)
         {
             var angularVelocityWS =

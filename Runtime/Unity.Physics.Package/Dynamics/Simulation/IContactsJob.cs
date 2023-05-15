@@ -6,9 +6,10 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -69,7 +70,7 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public sfloat CoefficientOfFriction
+        public tfloat CoefficientOfFriction
         {
             get => ContactHeader.CoefficientOfFriction;
             set
@@ -79,7 +80,7 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public sfloat CoefficientOfRestitution
+        public tfloat CoefficientOfRestitution
         {
             get => ContactHeader.CoefficientOfRestitution;
             set
@@ -108,7 +109,7 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public sfloat Distance
+        public tfloat Distance
         {
             get => ContactPoint.Distance;
             set

@@ -5,9 +5,10 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 using static ME.ECS.Essentials.Physics.Math;
@@ -44,13 +45,13 @@ namespace ME.ECS.Essentials.Physics
             // Defaults to 1.0f, while other values will scale the intensity up/down.
             // Shouldn't go higher than 5.0f, as it will result in bad behavior (too aggressive velocity clipping).
             // Set it to 0.0f to disable the feature.
-            public sfloat VelocityClippingFactor;
+            public tfloat VelocityClippingFactor;
 
             // Controls the intensity of inertia scaling.
             // Defaults to 1.0f, while other values will scale the intensity up/down.
             // Shouldn't go higher than 5.0f, as it will result in bad behavior (too high inertia of bodies).
             // Set it to 0.0f to disable the feature.
-            public sfloat InertiaScalingFactor;
+            public tfloat InertiaScalingFactor;
 
             public static readonly StabilizationHeuristicSettings Default = new StabilizationHeuristicSettings
             {
@@ -103,7 +104,7 @@ namespace ME.ECS.Essentials.Physics
         // Per motion data for solver stabilization
         internal struct StabilizationMotionData
         {
-            public sfloat InverseInertiaScale;
+            public tfloat InverseInertiaScale;
             public byte NumPairs;
         }
 
@@ -111,7 +112,7 @@ namespace ME.ECS.Essentials.Physics
         internal struct MotionStabilizationInput
         {
             public Velocity InputVelocity;
-            public sfloat InverseInertiaScale;
+            public tfloat InverseInertiaScale;
 
             public static readonly MotionStabilizationInput Default = new MotionStabilizationInput
             {
@@ -124,9 +125,9 @@ namespace ME.ECS.Essentials.Physics
         {
             public bool IsFirstIteration;
             public bool IsLastIteration;
-            public sfloat InvNumSolverIterations;
-            public sfloat Timestep;
-            public sfloat InvTimestep;
+            public tfloat InvNumSolverIterations;
+            public tfloat Timestep;
+            public tfloat InvTimestep;
         }
 
         // Apply gravity to all dynamic bodies and copy input velocities
@@ -168,20 +169,20 @@ namespace ME.ECS.Essentials.Physics
 
         // Build Jacobians from the contacts and joints stored in the simulation context
         public static void BuildJacobians(ref PhysicsWorld world,
-            sfloat timeStep, float3 gravity, int numSolverIterations,
+            tfloat timeStep, float3 gravity, int numSolverIterations,
             NativeArray<DispatchPairSequencer.DispatchPair> dispatchPairs,
             ref NativeStream.Reader contactsReader, ref NativeStream.Writer jacobiansWriter)
         {
             contactsReader.BeginForEachIndex(0);
             jacobiansWriter.BeginForEachIndex(0);
-            sfloat invTimeStep = timeStep > 0.0f ? 1.0f / timeStep : 0.0f;
-            sfloat gravityAcceleration = math.length(gravity);
+            tfloat invTimeStep = timeStep > 0.0f ? 1.0f / timeStep : 0.0f;
+            tfloat gravityAcceleration = math.length(gravity);
             BuildJacobians(ref world, timeStep, invTimeStep, gravityAcceleration, numSolverIterations,
                 dispatchPairs, 0, dispatchPairs.Length, ref contactsReader, ref jacobiansWriter);
         }
 
         // Schedule jobs to build Jacobians from the contacts stored in the simulation context
-        internal static SimulationJobHandles ScheduleBuildJacobiansJobs(ref PhysicsWorld world, sfloat timeStep, float3 gravity,
+        internal static SimulationJobHandles ScheduleBuildJacobiansJobs(ref PhysicsWorld world, tfloat timeStep, float3 gravity,
             int numSolverIterations, JobHandle inputDeps, ref NativeList<DispatchPairSequencer.DispatchPair> dispatchPairs,
             ref DispatchPairSequencer.SolverSchedulerInfo solverSchedulerInfo,
             ref NativeStream contacts, ref NativeStream jacobians, bool multiThreaded = true)
@@ -229,11 +230,11 @@ namespace ME.ECS.Essentials.Physics
 
         // Solve the Jacobians stored in the simulation context
         public static void SolveJacobians(ref NativeStream.Reader jacobiansReader, NativeArray<MotionVelocity> motionVelocities,
-            sfloat timeStep, int numIterations, ref NativeStream.Writer collisionEventsWriter, ref NativeStream.Writer triggerEventsWriter,
+            tfloat timeStep, int numIterations, ref NativeStream.Writer collisionEventsWriter, ref NativeStream.Writer triggerEventsWriter,
             StabilizationData solverStabilizationData)
         {
-            sfloat invNumIterations = math.rcp(numIterations);
-            sfloat invTimeStep = timeStep > 0.0f ? 1.0f / timeStep : 0.0f;
+            tfloat invNumIterations = math.rcp(numIterations);
+            tfloat invTimeStep = timeStep > 0.0f ? 1.0f / timeStep : 0.0f;
             for (int solverIterationId = 0; solverIterationId < numIterations; solverIterationId++)
             {
                 var stepInput = new StepInput
@@ -256,7 +257,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Schedule jobs to solve the Jacobians stored in the simulation context
         internal static unsafe SimulationJobHandles ScheduleSolveJacobiansJobs(
-            ref DynamicsWorld dynamicsWorld, sfloat timestep, int numIterations,
+            ref DynamicsWorld dynamicsWorld, tfloat timestep, int numIterations,
             ref NativeStream jacobians, ref NativeStream collisionEvents, ref NativeStream triggerEvents,
             ref DispatchPairSequencer.SolverSchedulerInfo solverSchedulerInfo,
             StabilizationData solverStabilizationData, JobHandle inputDeps, bool multiThreaded = true)
@@ -295,7 +296,7 @@ namespace ME.ECS.Essentials.Physics
 
                 handle = JobHandle.CombineDependencies(collisionEventStreamHandle, triggerEventStreamHandle);
 
-                sfloat invNumIterations = math.rcp(numIterations);
+                tfloat invNumIterations = math.rcp(numIterations);
 
                 var phaseInfoPtrs = (DispatchPairSequencer.SolverSchedulerInfo.SolvePhaseInfo*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(solverSchedulerInfo.PhaseInfo);
 
@@ -424,11 +425,11 @@ namespace ME.ECS.Essentials.Physics
 
             public NativeStream.Reader ContactsReader;
             public NativeStream.Writer JacobiansWriter;
-            public sfloat TimeStep;
+            public tfloat TimeStep;
             [ReadOnly] public NativeArray<DispatchPairSequencer.DispatchPair> DispatchPairs;
             [ReadOnly] public int NumSolverIterations;
-            public sfloat InvTimeStep;
-            public sfloat GravityAcceleration;
+            public tfloat InvTimeStep;
+            public tfloat GravityAcceleration;
             [ReadOnly] public DispatchPairSequencer.SolverSchedulerInfo SolverSchedulerInfo;
 
             public void Execute(int workItemIndex)
@@ -450,7 +451,7 @@ namespace ME.ECS.Essentials.Physics
 
             public NativeStream.Reader ContactsReader;
             public NativeStream.Writer JacobiansWriter;
-            public sfloat TimeStep;
+            public tfloat TimeStep;
             [ReadOnly] public NativeArray<DispatchPairSequencer.DispatchPair> DispatchPairs;
             [ReadOnly] public int NumSolverIterations;
             public float3 Gravity;
@@ -524,7 +525,7 @@ namespace ME.ECS.Essentials.Physics
             public NativeStream.Writer TriggerEventsWriter;
 
             public int NumIterations;
-            public sfloat Timestep;
+            public tfloat Timestep;
 
             public void Execute()
             {
@@ -569,7 +570,7 @@ namespace ME.ECS.Essentials.Physics
                 // Scale up inertia for other iterations
                 if (isFirstIteration && numPairs > 1)
                 {
-                    sfloat inertiaScale = 1.0f + 0.2f * (numPairs - 1) * solverStabilizationData.StabilizationHeuristicSettings.InertiaScalingFactor;
+                    tfloat inertiaScale = 1.0f + 0.2f * (numPairs - 1) * solverStabilizationData.StabilizationHeuristicSettings.InertiaScalingFactor;
                     motionData.InverseInertiaScale = math.rcp(inertiaScale);
                     solverStabilizationData.MotionData[i] = motionData;
                 }
@@ -579,10 +580,10 @@ namespace ME.ECS.Essentials.Physics
                 float3 linVelSideways = motionVelocity.LinearVelocity - linVelVertical;
 
                 // Choose a very small gravity coefficient for clipping threshold
-                sfloat gravityCoefficient = (numPairs == 1 ? 0.1f : 0.25f) * solverStabilizationData.StabilizationHeuristicSettings.VelocityClippingFactor;
+                tfloat gravityCoefficient = (numPairs == 1 ? 0.1f : 0.25f) * solverStabilizationData.StabilizationHeuristicSettings.VelocityClippingFactor;
 
                 // Linear velocity threshold
-                sfloat smallLinVelThresholdSq = math.lengthsq(gravityPerStep * motionVelocity.GravityFactor * gravityCoefficient);
+                tfloat smallLinVelThresholdSq = math.lengthsq(gravityPerStep * motionVelocity.GravityFactor * gravityCoefficient);
 
                 // Stabilize the velocities
                 if (math.lengthsq(linVelSideways) < smallLinVelThresholdSq)
@@ -595,8 +596,8 @@ namespace ME.ECS.Essentials.Physics
                         // Angular velocity threshold
                         if (motionVelocity.AngularExpansionFactor > 0.0f)
                         {
-                            sfloat angularFactorSq = math.rcp(motionVelocity.AngularExpansionFactor * motionVelocity.AngularExpansionFactor) * 0.01f;
-                            sfloat smallAngVelThresholdSq = smallLinVelThresholdSq * angularFactorSq;
+                            tfloat angularFactorSq = math.rcp(motionVelocity.AngularExpansionFactor * motionVelocity.AngularExpansionFactor) * 0.01f;
+                            tfloat smallAngVelThresholdSq = smallLinVelThresholdSq * angularFactorSq;
                             if (math.lengthsq(motionVelocity.AngularVelocity) < smallAngVelThresholdSq)
                             {
                                 motionVelocity.AngularVelocity = float3.zero;
@@ -615,7 +616,7 @@ namespace ME.ECS.Essentials.Physics
         #region Implementation
 
         private static void BuildJacobian(MTransform worldFromA, MTransform worldFromB, float3 normal, float3 armA, float3 armB,
-            float3 invInertiaA, float3 invInertiaB, sfloat sumInvMass, out float3 angularA, out float3 angularB, out sfloat invEffectiveMass)
+            float3 invInertiaA, float3 invInertiaB, tfloat sumInvMass, out float3 angularA, out float3 angularB, out tfloat invEffectiveMass)
         {
             float3 crossA = math.cross(armA, normal);
             angularA = math.mul(worldFromA.InverseRotation, crossA).xyz;
@@ -632,11 +633,11 @@ namespace ME.ECS.Essentials.Physics
             float3 normal,
             MTransform worldFromA,
             MTransform worldFromB,
-            sfloat invTimestep,
+            tfloat invTimestep,
             MotionVelocity velocityA,
             MotionVelocity velocityB,
-            sfloat sumInvMass,
-            sfloat maxDepenetrationVelocity,
+            tfloat sumInvMass,
+            tfloat maxDepenetrationVelocity,
             ref JacobianHeader jacobianHeader,
             ref float3 centerA,
             ref float3 centerB,
@@ -649,12 +650,12 @@ namespace ME.ECS.Essentials.Physics
             float3 armA = pointOnA - worldFromA.Translation;
             float3 armB = pointOnB - worldFromB.Translation;
             BuildJacobian(worldFromA, worldFromB, normal, armA, armB, velocityA.InverseInertia, velocityB.InverseInertia, sumInvMass,
-                out jacAngular.Jac.AngularA, out jacAngular.Jac.AngularB, out sfloat invEffectiveMass);
+                out jacAngular.Jac.AngularA, out jacAngular.Jac.AngularB, out tfloat invEffectiveMass);
             jacAngular.Jac.EffectiveMass = 1.0f / invEffectiveMass;
             jacAngular.Jac.Impulse = 0.0f;
 
-            sfloat solveDistance = contact.Distance;
-            sfloat solveVelocity = solveDistance * invTimestep;
+            tfloat solveDistance = contact.Distance;
+            tfloat solveVelocity = solveDistance * invTimestep;
 
             solveVelocity = math.max(-maxDepenetrationVelocity, solveVelocity);
 
@@ -762,9 +763,9 @@ namespace ME.ECS.Essentials.Physics
 
         private static unsafe void BuildJacobians(
             ref PhysicsWorld world,
-            sfloat timestep,
-            sfloat invTimestep,
-            sfloat gravityAcceleration,
+            tfloat timestep,
+            tfloat invTimestep,
+            tfloat gravityAcceleration,
             int numSolverIterations,
             NativeArray<DispatchPairSequencer.DispatchPair> dispatchPairs,
             int firstDispatchPairIndex,
@@ -773,7 +774,7 @@ namespace ME.ECS.Essentials.Physics
             ref NativeStream.Writer jacobianWriter)
         {
             // Contact resting velocity for restitution
-            sfloat negContactRestingVelocity = -gravityAcceleration * timestep;
+            tfloat negContactRestingVelocity = -gravityAcceleration * timestep;
 
             for (int i = 0; i < dispatchPairCount; i++)
             {
@@ -804,7 +805,7 @@ namespace ME.ECS.Essentials.Physics
                         ref ContactHeader contactHeader = ref contactReader.Read<ContactHeader>();
                         GetMotions(contactHeader.BodyPair, ref motionDatas, ref motionVelocities, out MotionVelocity velocityA, out MotionVelocity velocityB, out MTransform worldFromA, out MTransform worldFromB);
 
-                        sfloat sumInvMass = velocityA.InverseMass + velocityB.InverseMass;
+                        tfloat sumInvMass = velocityA.InverseMass + velocityB.InverseMass;
                         bool bothMotionsAreKinematic = velocityA.IsKinematic && velocityB.IsKinematic;
 
                         // Skip contact between infinite mass bodies which don't want to raise events. These cannot have any effect during solving.
@@ -848,7 +849,7 @@ namespace ME.ECS.Essentials.Physics
                         bool isDynamicStaticPair = contactHeader.BodyPair.BodyIndexB >= motionVelocities.Length;
 
                         // If contact distance is negative, use an artificially reduced penetration depth to prevent the dynamic-dynamic contacts from depenetrating too quickly
-                        sfloat maxDepenetrationVelocity = isDynamicStaticPair ? float.MaxValue : 3.0f; // meter/seconds time step independent
+                        tfloat maxDepenetrationVelocity = isDynamicStaticPair ? float.MaxValue : 3.0f; // meter/seconds time step independent
 
                         if (jacobianHeader.Type == JacobianType.Contact)
                         {
@@ -878,9 +879,9 @@ namespace ME.ECS.Essentials.Physics
                                 if (contactHeader.CoefficientOfRestitution > 0.0f)
                                 {
                                     ref ContactJacAngAndVelToReachCp jacAngular = ref jacobianHeader.AccessAngularJacobian(j);
-                                    sfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(baseJac.Normal, jacAngular.Jac,
+                                    tfloat relativeVelocity = BaseContactJacobian.GetJacVelocity(baseJac.Normal, jacAngular.Jac,
                                         velocityA.LinearVelocity, velocityA.AngularVelocity, velocityB.LinearVelocity, velocityB.AngularVelocity);
-                                    sfloat dv = jacAngular.VelToReachCp - relativeVelocity;
+                                    tfloat dv = jacAngular.VelToReachCp - relativeVelocity;
                                     if (dv > 0.0f && relativeVelocity < negContactRestingVelocity)
                                     {
                                         // Restitution impulse is applied as if contact point is on the contact plane.
@@ -900,9 +901,9 @@ namespace ME.ECS.Essentials.Physics
                                         // directly opposite to gravity direction. Otherwise, this value will only be smaller.
                                         // However, since this can only result in smaller bounce than the "correct" one, we can
                                         // safely go with the default gravity value in all cases.
-                                        sfloat restitutionVelocity = (relativeVelocity - negContactRestingVelocity) * contactHeader.CoefficientOfRestitution;
-                                        sfloat distanceToGround = math.max(-jacAngular.VelToReachCp * timestep, 0.0f);
-                                        sfloat effectiveRestitutionVelocity =
+                                        tfloat restitutionVelocity = (relativeVelocity - negContactRestingVelocity) * contactHeader.CoefficientOfRestitution;
+                                        tfloat distanceToGround = math.max(-jacAngular.VelToReachCp * timestep, 0.0f);
+                                        tfloat effectiveRestitutionVelocity =
                                             math.sqrt(math.max(restitutionVelocity * restitutionVelocity - 2.0f * gravityAcceleration * distanceToGround, 0.0f));
 
                                         jacAngular.VelToReachCp =
@@ -925,7 +926,7 @@ namespace ME.ECS.Essentials.Physics
                                 contactJacobian.AngularFriction.Impulse = 0.0f;
 
                                 // Calculate average position
-                                sfloat invNumContacts = math.rcp(contactJacobian.BaseJacobian.NumContacts);
+                                tfloat invNumContacts = math.rcp(contactJacobian.BaseJacobian.NumContacts);
                                 centerA *= invNumContacts;
                                 centerB *= invNumContacts;
 
@@ -933,7 +934,7 @@ namespace ME.ECS.Essentials.Physics
                                 CalculatePerpendicularNormalized(contactJacobian.BaseJacobian.Normal, out float3 frictionDir0, out float3 frictionDir1);
 
                                 // Build linear jacobian
-                                sfloat invEffectiveMass0, invEffectiveMass1;
+                                tfloat invEffectiveMass0, invEffectiveMass1;
                                 {
                                     float3 armA = centerA;
                                     float3 armB = centerB;
@@ -944,7 +945,7 @@ namespace ME.ECS.Essentials.Physics
                                 }
 
                                 // Build angular jacobian
-                                sfloat invEffectiveMassAngular;
+                                tfloat invEffectiveMassAngular;
                                 {
                                     contactJacobian.AngularFriction.AngularA = math.mul(worldFromA.InverseRotation, contactJacobian.BaseJacobian.Normal);
                                     contactJacobian.AngularFriction.AngularB = math.mul(worldFromB.InverseRotation, -contactJacobian.BaseJacobian.Normal);
@@ -1039,7 +1040,7 @@ namespace ME.ECS.Essentials.Physics
 
         internal static unsafe void BuildJointJacobian(Joint joint,
             MotionVelocity velocityA, MotionVelocity velocityB, MotionData motionA, MotionData motionB,
-            sfloat timestep, int numIterations, [NoAlias] ref NativeStream.Writer jacobianWriter)
+            tfloat timestep, int numIterations, [NoAlias] ref NativeStream.Writer jacobianWriter)
         {
             var bodyAFromMotionA = new MTransform(motionA.BodyFromMotion);
             MTransform motionAFromJoint = Mul(Inverse(bodyAFromMotionA), joint.AFromJoint);
@@ -1100,7 +1101,7 @@ namespace ME.ECS.Essentials.Physics
                 header.Type = jacType;
                 header.Flags = jacFlags;
 
-                JacobianUtilities.CalculateConstraintTauAndDamping(constraint.SpringFrequency, constraint.SpringDamping, timestep, numIterations, out sfloat tau, out sfloat damping);
+                JacobianUtilities.CalculateConstraintTauAndDamping(constraint.SpringFrequency, constraint.SpringDamping, timestep, numIterations, out tfloat tau, out tfloat damping);
 
                 // Build the Jacobian
                 switch (constraint.Type)
@@ -1257,7 +1258,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         private static void StabilizeVelocities(NativeArray<MotionVelocity> motionVelocities,
-            bool isFirstIteration, sfloat timeStep, StabilizationData solverStabilizationData)
+            bool isFirstIteration, tfloat timeStep, StabilizationData solverStabilizationData)
         {
             float3 gravityPerStep = solverStabilizationData.Gravity * timeStep;
             float3 gravityNormalized = math.normalizesafe(solverStabilizationData.Gravity);

@@ -2,9 +2,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using UnityEngine.Assertions;
 
@@ -97,27 +98,27 @@ namespace ME.ECS.Essentials.Physics
 
         // Checks if the provided sphere is overlapping with an ICollidable
         // Return true if it is overlapping
-        bool CheckSphere(float3 position, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool CheckSphere(float3 position, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Checks if the provided sphere is overlapping with an ICollidable
         // Return true if there is at least one overlap, and all overlaps will be stored in provided list
-        bool OverlapSphere(float3 position, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool OverlapSphere(float3 position, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Checks if the provided sphere is overlapping with an ICollidable
         // Return true if there is at least one overlap, the passed collector is used for custom hit filtering if needed
-        bool OverlapSphereCustom<T>(float3 position, sfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>;
+        bool OverlapSphereCustom<T>(float3 position, tfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>;
 
         // Checks if the provided capsule is overlapping with an ICollidable
         // Return true if it is overlapping
-        bool CheckCapsule(float3 point1, float3 point2, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool CheckCapsule(float3 point1, float3 point2, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Checks if the provided capsule is overlapping with an ICollidable
         // Return true if there is at least one overlap, and all overlaps will be stored in provided list
-        bool OverlapCapsule(float3 point1, float3 point2, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool OverlapCapsule(float3 point1, float3 point2, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Checks if the provided capsule is overlapping with an ICollidable
         // Return true if there is at least one overlap, the passed collector is used for custom hit filtering if needed
-        bool OverlapCapsuleCustom<T>(float3 point1, float3 point2, sfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>;
+        bool OverlapCapsuleCustom<T>(float3 point1, float3 point2, tfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>;
 
         // Checks if the provided box is overlapping with an ICollidable
         // Return true if it is overlapping
@@ -133,51 +134,51 @@ namespace ME.ECS.Essentials.Physics
 
         // Casts a specified sphere along a ray specified with origin, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if there is at least one hit.
-        bool SphereCast(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool SphereCast(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified sphere along a ray specified with origin, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if a hit happened, the information about closest hit will be in hitInfo.
-        bool SphereCast(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool SphereCast(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified sphere along a ray specified with origin, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, all hits will be stored in a provided list.
-        bool SphereCastAll(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool SphereCastAll(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified sphere along a ray specified with origin, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, the passed collector is used for custom hit filtering.
-        bool SphereCastCustom<T>(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
+        bool SphereCastCustom<T>(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
 
         // Casts a specified box along a ray specified with center, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if there is at least one hit.
-        bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified box along a ray specified with center, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if a hit happened, the information about closest hit will be in hitInfo.
-        bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified box along a ray specified with center, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, all hits will be stored in a provided list.
-        bool BoxCastAll(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool BoxCastAll(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a specified box along a ray specified with center, direction, and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, the passed collector is used for custom hit filtering.
-        bool BoxCastCustom<T>(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
+        bool BoxCastCustom<T>(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
 
         // Casts a capsule specified with two points along a ray specified with the center of the capsule, direction and maxDistance, and checks if it hits an ICollidable.
         // Return true if there is at least one hit.
-        bool CapsuleCast(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool CapsuleCast(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a capsule specified with two points along a ray specified with the center of the capsule, direction and maxDistance, and checks if it hits an ICollidable.
         // Return true if a hit happened, the information about closest hit will be in hitInfo.
-        bool CapsuleCast(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool CapsuleCast(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a capsule specified with two points along a ray specified with the center of the capsule, direction and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, all hits will be stored in a provided list.
-        bool CapsuleCastAll(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
+        bool CapsuleCastAll(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default);
 
         // Casts a capsule specified with two points along a ray specified with the center of the capsule, direction and maxDistance, and checks if it hits an ICollidable.
         // Return true if at least one hit happened, the passed collector is used for custom hit filtering.
-        bool CapsuleCastCustom<T>(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
+        bool CapsuleCastCustom<T>(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>;
     }
 
     // Used as a way to provide queries with more filtering options, without creating collectors
@@ -309,7 +310,7 @@ namespace ME.ECS.Essentials.Physics
 
         #region Existing GO API queries
 
-        public static bool OverlapSphereCustom<T, C>(ref T target, float3 position, sfloat radius, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool OverlapSphereCustom<T, C>(ref T target, float3 position, tfloat radius, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
             where C : struct, ICollector<DistanceHit>
         {
@@ -331,21 +332,21 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public static bool OverlapSphere<T>(ref T target, float3 position, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool OverlapSphere<T>(ref T target, float3 position, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AllHitsCollector<DistanceHit>(radius, ref outHits);
             return target.OverlapSphereCustom(position, radius, ref collector, filter, queryInteraction);
         }
 
-        public static bool CheckSphere<T>(ref T target, float3 position, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CheckSphere<T>(ref T target, float3 position, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AnyHitCollector<DistanceHit>(radius);
             return target.OverlapSphereCustom(position, radius, ref collector, filter, queryInteraction);
         }
 
-        public static bool OverlapCapsuleCustom<T, C>(ref T target, float3 point1, float3 point2, sfloat radius, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool OverlapCapsuleCustom<T, C>(ref T target, float3 point1, float3 point2, tfloat radius, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
             where C : struct, ICollector<DistanceHit>
         {
@@ -388,14 +389,14 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public static bool OverlapCapsule<T>(ref T target, float3 point1, float3 point2, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool OverlapCapsule<T>(ref T target, float3 point1, float3 point2, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AllHitsCollector<DistanceHit>(0.0f, ref outHits);
             return target.OverlapCapsuleCustom(point1, point2, radius, ref collector, filter, queryInteraction);
         }
 
-        public static bool CheckCapsule<T>(ref T target, float3 point1, float3 point2, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CheckCapsule<T>(ref T target, float3 point1, float3 point2, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AnyHitCollector<DistanceHit>(0.0f);
@@ -459,7 +460,7 @@ namespace ME.ECS.Essentials.Physics
             return target.OverlapBoxCustom(center, orientation, halfExtents, ref collector, filter, queryInteraction);
         }
 
-        public static bool SphereCastCustom<T, C>(ref T target, float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref C collector, CollisionFilter filter ,  QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool SphereCastCustom<T, C>(ref T target, float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref C collector, CollisionFilter filter ,  QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
             where C : struct, ICollector<ColliderCastHit>
         {
@@ -495,14 +496,14 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public static bool SphereCastAll<T>(ref T target, float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool SphereCastAll<T>(ref T target, float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AllHitsCollector<ColliderCastHit>(1.0f, ref outHits);
             return target.SphereCastCustom(origin, radius, direction, maxDistance, ref collector, filter, queryInteraction);
         }
 
-        public static bool SphereCast<T>(ref T target, float3 origin, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool SphereCast<T>(ref T target, float3 origin, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new ClosestHitCollector<ColliderCastHit>(1.0f);
@@ -512,14 +513,14 @@ namespace ME.ECS.Essentials.Physics
             return hasHit;
         }
 
-        public static bool SphereCast<T>(ref T target, float3 origin, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool SphereCast<T>(ref T target, float3 origin, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AnyHitCollector<ColliderCastHit>(1.0f);
             return target.SphereCastCustom(origin, radius, direction, maxDistance, ref collector, filter, queryInteraction);
         }
 
-        public static bool BoxCastCustom<T, C>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool BoxCastCustom<T, C>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
             where C : struct, ICollector<ColliderCastHit>
         {
@@ -557,14 +558,14 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public static bool BoxCastAll<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool BoxCastAll<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AllHitsCollector<ColliderCastHit>(1.0f, ref outHits);
             return target.BoxCastCustom(center, orientation, halfExtents, direction, maxDistance, ref collector, filter, queryInteraction);
         }
 
-        public static bool BoxCast<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool BoxCast<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new ClosestHitCollector<ColliderCastHit>(1.0f);
@@ -573,14 +574,14 @@ namespace ME.ECS.Essentials.Physics
             return hasHit;
         }
 
-        public static bool BoxCast<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool BoxCast<T>(ref T target, float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AnyHitCollector<ColliderCastHit>(1.0f);
             return target.BoxCastCustom(center, orientation, halfExtents, direction, maxDistance, ref collector, filter, queryInteraction);
         }
 
-        public static bool CapsuleCastCustom<T, C>(ref T target, float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CapsuleCastCustom<T, C>(ref T target, float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref C collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
             where C : struct, ICollector<ColliderCastHit>
         {
@@ -620,14 +621,14 @@ namespace ME.ECS.Essentials.Physics
             }
         }
 
-        public static bool CapsuleCastAll<T>(ref T target, float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CapsuleCastAll<T>(ref T target, float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AllHitsCollector<ColliderCastHit>(1.0f, ref outHits);
             return target.CapsuleCastCustom(point1, point2, radius, direction, maxDistance, ref collector, filter, queryInteraction);
         }
 
-        public static bool CapsuleCast<T>(ref T target, float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CapsuleCast<T>(ref T target, float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new ClosestHitCollector<ColliderCastHit>(1.0f);
@@ -637,7 +638,7 @@ namespace ME.ECS.Essentials.Physics
             return hasHit;
         }
 
-        public static bool CapsuleCast<T>(ref T target, float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public static bool CapsuleCast<T>(ref T target, float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             where T : struct, ICollidable
         {
             var collector = new AnyHitCollector<ColliderCastHit>(1.0f);

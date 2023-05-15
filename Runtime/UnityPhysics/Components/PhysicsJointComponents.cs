@@ -4,7 +4,7 @@ using ME.ECS.Essentials.Physics;
 using ME.ECS.Mathematics;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using FloatRange = ME.ECS.Essentials.Physics.Math.FloatRange;
 
@@ -374,7 +374,7 @@ namespace ME.ECS.Essentials.Physics.Components
         /// <param name="perpendicularCone">The joint defining the conic sections about the perpendicular axis to subtract from the primary cone.</param>
         public static unsafe void CreateRagdoll(
             BodyFrame bodyAFromJoint, BodyFrame bodyBFromJoint,
-            sfloat maxConeAngle, FloatRange angularPlaneRange, FloatRange angularTwistRange,
+            tfloat maxConeAngle, FloatRange angularPlaneRange, FloatRange angularTwistRange,
             out PhysicsJoint primaryConeAndTwist, out PhysicsJoint perpendicularCone
         )
         {

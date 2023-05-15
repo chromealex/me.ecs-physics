@@ -4,9 +4,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -25,18 +26,18 @@ namespace ME.ECS.Essentials.Physics
         private quaternion m_Orientation;
 
         // The height of the cylinder, centered along the local Y axis
-        public sfloat Height { get => m_Height; set => m_Height = value; }
-        private sfloat m_Height;
+        public tfloat Height { get => m_Height; set => m_Height = value; }
+        private tfloat m_Height;
 
         // The radius of the cylinder
-        public sfloat Radius { get => m_Radius; set => m_Radius = value; }
-        private sfloat m_Radius;
+        public tfloat Radius { get => m_Radius; set => m_Radius = value; }
+        private tfloat m_Radius;
 
         // The radius by which to round off the edges of the cylinder.
         // This helps to optimize collision detection performance, by reducing the likelihood
         // of the inner hull being penetrated and incurring expensive collision algorithms.
-        public sfloat BevelRadius { get => m_BevelRadius; set => m_BevelRadius = value; }
-        private sfloat m_BevelRadius;
+        public tfloat BevelRadius { get => m_BevelRadius; set => m_BevelRadius = value; }
+        private tfloat m_BevelRadius;
 
         // The number of faces used to represent the rounded part of the cylinder
         public int SideCount { get => m_SideCount; set => m_SideCount = value; }
@@ -80,15 +81,15 @@ namespace ME.ECS.Essentials.Physics
         // Cylinder parameters
         private float3 m_Center;
         private quaternion m_Orientation;
-        private sfloat m_Height;
-        private sfloat m_Radius;
+        private tfloat m_Height;
+        private tfloat m_Radius;
         private int m_SideCount;
 
         public float3 Center => m_Center;
         public quaternion Orientation => m_Orientation;
-        public sfloat Height => m_Height;
-        public sfloat Radius => m_Radius;
-        public sfloat BevelRadius => ConvexHull.ConvexRadius;
+        public tfloat Height => m_Height;
+        public tfloat Radius => m_Radius;
+        public tfloat BevelRadius => ConvexHull.ConvexRadius;
         public int SideCount => m_SideCount;
 
         public CylinderGeometry Geometry
@@ -201,17 +202,17 @@ namespace ME.ECS.Essentials.Physics
                 Plane* planes = (Plane*)(&collider->m_FacePlanes[0]);
                 planes[0] = Math.TransformPlane(transform, new Plane(new float3(0f, 0f, -1f), -halfHeight));
                 planes[1] = Math.TransformPlane(transform, new Plane(new float3(0f, 0f, 1f), -halfHeight));
-                sfloat d = radius * math.cos((float)math.PI / m_SideCount);
+                tfloat d = radius * math.cos((float)math.PI / m_SideCount);
                 for (int i = 0; i < m_SideCount; ++i)
                 {
-                    sfloat angle = 2.0f * (float)math.PI * (i + 0.5f) / m_SideCount;
+                    tfloat angle = 2.0f * (float)math.PI * (i + 0.5f) / m_SideCount;
                     planes[2 + i] = Math.TransformPlane(transform, new Plane(new float3(math.cos(angle), math.sin(angle), 0f), -d));
                 }
 
                 // faces
                 ConvexHull.Face* faces = (ConvexHull.Face*)(&collider->m_Faces[0]);
                 byte* indices = (byte*)(&collider->m_FaceVertexIndices[0]);
-                sfloat halfAngle = (float)math.PI * 0.25f;
+                tfloat halfAngle = (float)math.PI * 0.25f;
                 {
                     faces[0].FirstIndex = 0;
                     faces[0].NumVertices = (byte)m_SideCount;
@@ -285,8 +286,8 @@ namespace ME.ECS.Essentials.Physics
             float3 v0 = transform.pos + halfAxis;
             float3 v1 = transform.pos - halfAxis;
             var axis = v1 - v0;
-            sfloat axisLen2 = m_Height * m_Height;
-            sfloat invAxisLen2 = math.rcp(axisLen2);
+            tfloat axisLen2 = m_Height * m_Height;
+            tfloat invAxisLen2 = math.rcp(axisLen2);
             float3 axisYZX = new float3(axis.y, axis.z, axis.x);
             float3 axisZXY = new float3(axis.z, axis.x, axis.y);
             float3 root = axisYZX * axisYZX;
@@ -353,18 +354,18 @@ namespace ME.ECS.Essentials.Physics
 
         // Interfaces that represent queries that exist in the GameObjects world.
 
-        public bool CheckSphere(float3 position, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool CheckSphere(float3 position, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.CheckSphere(ref this, position, radius, filter, queryInteraction);
-        public bool OverlapSphere(float3 position, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool OverlapSphere(float3 position, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.OverlapSphere(ref this, position, radius, ref outHits, filter, queryInteraction);
-        public bool OverlapSphereCustom<T>(float3 position, sfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>
+        public bool OverlapSphereCustom<T>(float3 position, tfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>
             => QueryWrappers.OverlapSphereCustom(ref this, position, radius, ref collector, filter, queryInteraction);
 
-        public bool CheckCapsule(float3 point1, float3 point2, sfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool CheckCapsule(float3 point1, float3 point2, tfloat radius, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.CheckCapsule(ref this, point1, point2, radius, filter, queryInteraction);
-        public bool OverlapCapsule(float3 point1, float3 point2, sfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool OverlapCapsule(float3 point1, float3 point2, tfloat radius, ref NativeList<DistanceHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.OverlapCapsule(ref this, point1, point2, radius, ref outHits, filter, queryInteraction);
-        public bool OverlapCapsuleCustom<T>(float3 point1, float3 point2, sfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>
+        public bool OverlapCapsuleCustom<T>(float3 point1, float3 point2, tfloat radius, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>
             => QueryWrappers.OverlapCapsuleCustom(ref this, point1, point2, radius, ref collector, filter, queryInteraction);
 
         public bool CheckBox(float3 center, quaternion orientation, float3 halfExtents, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
@@ -374,31 +375,31 @@ namespace ME.ECS.Essentials.Physics
         public bool OverlapBoxCustom<T>(float3 center, quaternion orientation, float3 halfExtents, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<DistanceHit>
             => QueryWrappers.OverlapBoxCustom(ref this, center, orientation, halfExtents, ref collector, filter, queryInteraction);
 
-        public bool SphereCast(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool SphereCast(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.SphereCast(ref this, origin, radius, direction, maxDistance, filter, queryInteraction);
-        public bool SphereCast(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool SphereCast(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.SphereCast(ref this, origin, radius, direction, maxDistance, out hitInfo, filter, queryInteraction);
-        public bool SphereCastAll(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool SphereCastAll(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.SphereCastAll(ref this, origin, radius, direction, maxDistance, ref outHits, filter, queryInteraction);
-        public bool SphereCastCustom<T>(float3 origin, sfloat radius, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
+        public bool SphereCastCustom<T>(float3 origin, tfloat radius, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
             => QueryWrappers.SphereCastCustom(ref this, origin, radius, direction, maxDistance, ref collector, filter, queryInteraction);
 
-        public bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.BoxCast(ref this, center, orientation, halfExtents, direction, maxDistance, filter, queryInteraction);
-        public bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool BoxCast(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.BoxCast(ref this, center, orientation, halfExtents, direction, maxDistance, out hitInfo, filter, queryInteraction);
-        public bool BoxCastAll(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool BoxCastAll(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.BoxCastAll(ref this, center, orientation, halfExtents, direction, maxDistance, ref outHits, filter, queryInteraction);
-        public bool BoxCastCustom<T>(float3 center, quaternion orientation, float3 halfExtents, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
+        public bool BoxCastCustom<T>(float3 center, quaternion orientation, float3 halfExtents, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
             => QueryWrappers.BoxCastCustom(ref this, center, orientation, halfExtents, direction, maxDistance, ref collector, filter, queryInteraction);
 
-        public bool CapsuleCast(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool CapsuleCast(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.CapsuleCast(ref this, point1, point2, radius, direction, maxDistance, filter, queryInteraction);
-        public bool CapsuleCast(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool CapsuleCast(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, out ColliderCastHit hitInfo, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.CapsuleCast(ref this, point1, point2, radius, direction, maxDistance, out hitInfo, filter, queryInteraction);
-        public bool CapsuleCastAll(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
+        public bool CapsuleCastAll(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref NativeList<ColliderCastHit> outHits, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default)
             => QueryWrappers.CapsuleCastAll(ref this, point1, point2, radius, direction, maxDistance, ref outHits, filter, queryInteraction);
-        public bool CapsuleCastCustom<T>(float3 point1, float3 point2, sfloat radius, float3 direction, sfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
+        public bool CapsuleCastCustom<T>(float3 point1, float3 point2, tfloat radius, float3 direction, tfloat maxDistance, ref T collector, CollisionFilter filter, QueryInteraction queryInteraction = QueryInteraction.Default) where T : struct, ICollector<ColliderCastHit>
             => QueryWrappers.CapsuleCastCustom(ref this, point1, point2, radius, direction, maxDistance, ref collector, filter, queryInteraction);
 
         #endregion

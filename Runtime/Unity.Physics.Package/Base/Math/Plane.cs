@@ -2,9 +2,10 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -21,7 +22,7 @@ namespace ME.ECS.Essentials.Physics
             set => m_NormalAndDistance.xyz = value;
         }
 
-        public sfloat Distance
+        public tfloat Distance
         {
             get => m_NormalAndDistance.w;
             set => m_NormalAndDistance.w = value;
@@ -29,7 +30,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Returns the distance from the point to the plane, positive if the point is on the side of
         // the plane on which the plane normal points, zero if the point is on the plane, negative otherwise.
-        public sfloat SignedDistanceToPoint(float3 point)
+        public tfloat SignedDistanceToPoint(float3 point)
         {
             return Math.Dotxyz1(m_NormalAndDistance, point);
         }
@@ -43,7 +44,7 @@ namespace ME.ECS.Essentials.Physics
         public Plane Flipped => new Plane { m_NormalAndDistance = -m_NormalAndDistance };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Plane(float3 normal, sfloat distance)
+        public Plane(float3 normal, tfloat distance)
         {
             m_NormalAndDistance = new float4(normal, distance);
         }

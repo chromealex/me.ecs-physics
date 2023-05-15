@@ -1,9 +1,10 @@
 using Unity.Burst;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 using static ME.ECS.Essentials.Physics.Math;
 
@@ -18,8 +19,8 @@ namespace ME.ECS.Essentials.Physics
         public float3 PivotBinB;
 
         // Pivot distance limits
-        public sfloat MinDistance;
-        public sfloat MaxDistance;
+        public tfloat MinDistance;
+        public tfloat MaxDistance;
 
         // Motion transforms before solving
         public RigidTransform WorldFromA;
@@ -34,20 +35,20 @@ namespace ME.ECS.Essentials.Physics
         public bool Is1D;
 
         // Position error at the beginning of the step
-        public sfloat InitialError;
+        public tfloat InitialError;
 
         // Fraction of the position error to correct per step
-        public sfloat Tau;
+        public tfloat Tau;
 
         // Fraction of the velocity error to correct per step
-        public sfloat Damping;
+        public tfloat Damping;
 
         // Build the Jacobian
         public void Build(
             MTransform aFromConstraint, MTransform bFromConstraint,
             MotionVelocity velocityA, MotionVelocity velocityB,
             MotionData motionA, MotionData motionB,
-            Constraint constraint, sfloat tau, sfloat damping)
+            Constraint constraint, tfloat tau, tfloat damping)
         {
             WorldFromA = motionA.WorldFromMotion;
             WorldFromB = motionB.WorldFromMotion;
@@ -109,7 +110,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         // Solve the Jacobian
-        public void Solve(ref MotionVelocity velocityA, ref MotionVelocity velocityB, sfloat timestep, sfloat invTimestep)
+        public void Solve(ref MotionVelocity velocityA, ref MotionVelocity velocityB, tfloat timestep, tfloat invTimestep)
         {
             // Predict the motions' transforms at the end of the step
             MTransform futureWorldFromA;
@@ -152,8 +153,8 @@ namespace ME.ECS.Essentials.Physics
             float3 impulse;
             {
                 // Find the difference between the future distance and the limit range, then apply tau and damping
-                sfloat futureDistanceError = CalculateError(futureWorldFromA, futureWorldFromB, out float3 futureDirection);
-                sfloat solveDistanceError = JacobianUtilities.CalculateCorrection(futureDistanceError, InitialError, Tau, Damping);
+                tfloat futureDistanceError = CalculateError(futureWorldFromA, futureWorldFromB, out float3 futureDirection);
+                tfloat solveDistanceError = JacobianUtilities.CalculateCorrection(futureDistanceError, InitialError, Tau, Damping);
 
                 // Calculate the impulse to correct the error
                 float3 solveError = solveDistanceError * futureDirection;
@@ -178,17 +179,17 @@ namespace ME.ECS.Essentials.Physics
             ang2 = math.cross(pivotInMotion, motionFromWorldRotation.c2);
         }
 
-        private sfloat CalculateError(MTransform worldFromA, MTransform worldFromB, out float3 direction)
+        private tfloat CalculateError(MTransform worldFromA, MTransform worldFromB, out float3 direction)
         {
             // Find the direction from pivot A to B and the distance between them
             float3 pivotA = Mul(worldFromA, PivotAinA);
             float3 pivotB = Mul(worldFromB, PivotBinB);
             float3 axis = math.mul(worldFromB.Rotation, AxisInB);
             direction = pivotB - pivotA;
-            sfloat dot = math.dot(direction, axis);
+            tfloat dot = math.dot(direction, axis);
 
             // Project for lower-dimension joints
-            sfloat distance;
+            tfloat distance;
             if (Is1D)
             {
                 // In 1D, distance is signed and measured along the axis
@@ -199,8 +200,8 @@ namespace ME.ECS.Essentials.Physics
             {
                 // In 2D / 3D, distance is nonnegative.  In 2D it is measured perpendicular to the axis.
                 direction -= axis * dot;
-                sfloat futureDistanceSq = math.lengthsq(direction);
-                sfloat invFutureDistance = math.select(math.rsqrt(futureDistanceSq), 0.0f, futureDistanceSq == 0.0f);
+                tfloat futureDistanceSq = math.lengthsq(direction);
+                tfloat invFutureDistance = math.select(math.rsqrt(futureDistanceSq), 0.0f, futureDistanceSq == 0.0f);
                 distance = futureDistanceSq * invFutureDistance;
                 direction *= invFutureDistance;
             }

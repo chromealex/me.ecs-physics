@@ -3,9 +3,10 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
+using tfloat = sfloat;
 #else
 using Unity.Mathematics;
-using sfloat = System.Single;
+using tfloat = System.Single;
 #endif
 
 namespace ME.ECS.Essentials.Physics
@@ -14,7 +15,7 @@ namespace ME.ECS.Essentials.Physics
     public struct CollisionEvent : ISimulationEvent<CollisionEvent>
     {
         internal CollisionEventDataRef EventData;
-        internal sfloat TimeStep;
+        internal tfloat TimeStep;
         internal Velocity InputVelocityA;
         internal Velocity InputVelocityB;
 
@@ -54,7 +55,7 @@ namespace ME.ECS.Essentials.Physics
             public NativeArray<float3> EstimatedContactPointPositions;
 
             // Estimated total impulse applied
-            public sfloat EstimatedImpulse;
+            public tfloat EstimatedImpulse;
 
             // Calculate the average contact point position
             public float3 AverageContactPointPosition
@@ -81,9 +82,9 @@ namespace ME.ECS.Essentials.Physics
         private readonly NativeStream m_EventDataStream;
         [ReadOnly]
         private readonly NativeArray<Velocity> m_InputVelocities;
-        private readonly sfloat m_TimeStep;
+        private readonly tfloat m_TimeStep;
 
-        internal CollisionEvents(NativeStream eventDataStream, NativeArray<Velocity> inputVelocities, sfloat timeStep)
+        internal CollisionEvents(NativeStream eventDataStream, NativeArray<Velocity> inputVelocities, tfloat timeStep)
         {
             m_EventDataStream = eventDataStream;
             m_InputVelocities = inputVelocities;
@@ -103,14 +104,14 @@ namespace ME.ECS.Essentials.Physics
             private CollisionEventDataRef m_Current;
 
             private readonly NativeArray<Velocity> m_InputVelocities;
-            private readonly sfloat m_TimeStep;
+            private readonly tfloat m_TimeStep;
 
             public CollisionEvent Current
             {
                 get => m_Current.Value.CreateCollisionEvent(m_TimeStep, m_InputVelocities);
             }
 
-            internal Enumerator(NativeStream stream, NativeArray<Velocity> inputVelocities, sfloat timeStep)
+            internal Enumerator(NativeStream stream, NativeArray<Velocity> inputVelocities, tfloat timeStep)
             {
                 m_Reader = stream.IsCreated ? stream.AsReader() : new NativeStream.Reader();
                 m_CurrentWorkItem = 0;
@@ -165,12 +166,12 @@ namespace ME.ECS.Essentials.Physics
         public float3 Normal;
 
         // The total impulse applied by the solver for this pair
-        internal sfloat SolverImpulse;
+        internal tfloat SolverImpulse;
 
         // Number of narrow phase contact points
         internal int NumNarrowPhaseContactPoints;
 
-        internal unsafe CollisionEvent CreateCollisionEvent(sfloat timeStep, NativeArray<Velocity> inputVelocities)
+        internal unsafe CollisionEvent CreateCollisionEvent(tfloat timeStep, NativeArray<Velocity> inputVelocities)
         {
             int bodyIndexA = BodyIndices.BodyIndexA;
             int bodyIndexB = BodyIndices.BodyIndexB;
@@ -197,7 +198,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Calculate extra details about the collision, by re-integrating the leaf colliders to the time of collision
         internal unsafe CollisionEvent.Details CalculateDetails(
-            ref PhysicsWorld physicsWorld, sfloat timeStep, Velocity inputVelocityA, Velocity inputVelocityB, NativeArray<ContactPoint> narrowPhaseContactPoints)
+            ref PhysicsWorld physicsWorld, tfloat timeStep, Velocity inputVelocityA, Velocity inputVelocityB, NativeArray<ContactPoint> narrowPhaseContactPoints)
         {
             int bodyIndexA = BodyIndices.BodyIndexA;
             int bodyIndexB = BodyIndices.BodyIndexB;
@@ -209,13 +210,13 @@ namespace ME.ECS.Essentials.Physics
             MotionData motionDataA = bodyAIsDynamic ? physicsWorld.MotionDatas[bodyIndexA] : MotionData.Zero;
             MotionData motionDataB = bodyBIsDynamic ? physicsWorld.MotionDatas[bodyIndexB] : MotionData.Zero;
 
-            sfloat estimatedImpulse = SolverImpulse;
+            tfloat estimatedImpulse = SolverImpulse;
 
             // First calculate minimum time of impact and estimate the impulse
-            sfloat toi = timeStep;
+            tfloat toi = timeStep;
             {
-                sfloat sumRemainingVelocities = 0.0f;
-                sfloat numRemainingVelocities = 0.0f;
+                tfloat sumRemainingVelocities = 0.0f;
+                tfloat numRemainingVelocities = 0.0f;
                 for (int i = 0; i < narrowPhaseContactPoints.Length; i++)
                 {
                     var cp = narrowPhaseContactPoints[i];
@@ -226,7 +227,7 @@ namespace ME.ECS.Essentials.Physics
                             motionVelocityA.LinearVelocity, motionVelocityA.AngularVelocity, cp.Position + Normal * cp.Distance);
                         float3 pointVelB = GetPointVelocity(motionDataB.WorldFromMotion,
                             motionVelocityB.LinearVelocity, motionVelocityB.AngularVelocity, cp.Position);
-                        sfloat projRelVel = math.dot(pointVelB - pointVelA, Normal);
+                        tfloat projRelVel = math.dot(pointVelB - pointVelA, Normal);
                         if (projRelVel > 0.0f)
                         {
                             sumRemainingVelocities += projRelVel;
@@ -240,10 +241,10 @@ namespace ME.ECS.Essentials.Physics
                             inputVelocityA.Linear, inputVelocityA.Angular, cp.Position + Normal * cp.Distance);
                         float3 pointVelB = GetPointVelocity(motionDataB.WorldFromMotion,
                             inputVelocityB.Linear, inputVelocityB.Angular, cp.Position);
-                        sfloat projRelVel = math.dot(pointVelB - pointVelA, Normal);
+                        tfloat projRelVel = math.dot(pointVelB - pointVelA, Normal);
                         if (projRelVel > 0.0f)
                         {
-                            sfloat newToi = math.max(0.0f, cp.Distance / projRelVel);
+                            tfloat newToi = math.max(0.0f, cp.Distance / projRelVel);
                             toi = math.min(toi, newToi);
                         }
                         else if (cp.Distance <= 0.0f)
@@ -256,14 +257,14 @@ namespace ME.ECS.Essentials.Physics
 
                 if (numRemainingVelocities > 0.0f)
                 {
-                    sfloat sumInvMass = motionVelocityA.InverseMass + motionVelocityB.InverseMass;
+                    tfloat sumInvMass = motionVelocityA.InverseMass + motionVelocityB.InverseMass;
                     estimatedImpulse += sumRemainingVelocities / (numRemainingVelocities * sumInvMass);
                 }
             }
 
             // Then, sub-integrate for time of impact and keep contact points closer than hitDistanceThreshold
             int closestContactIndex = -1;
-            sfloat minDistance = float.MaxValue;
+            tfloat minDistance = float.MaxValue;
             {
                 int estimatedContactPointCount = 0;
                 for (int i = 0; i < narrowPhaseContactPoints.Length; i++)
@@ -274,7 +275,7 @@ namespace ME.ECS.Essentials.Physics
                         float3 pointVelA = GetPointVelocity(motionDataA.WorldFromMotion, inputVelocityA.Linear, inputVelocityA.Angular, cp.Position + Normal * cp.Distance);
                         float3 pointVelB = GetPointVelocity(motionDataB.WorldFromMotion, inputVelocityB.Linear, inputVelocityB.Angular, cp.Position);
                         float3 relVel = pointVelB - pointVelA;
-                        sfloat projRelVel = math.dot(relVel, Normal);
+                        tfloat projRelVel = math.dot(relVel, Normal);
 
                         // Only sub integrate if approaching, otherwise leave it as is
                         // (it can happen that input velocity was separating but there
