@@ -517,6 +517,17 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
                             var data = dynamicBodies[i].WorldFromBody;
                             var entity = bag.GetEntity(i);
+                            var pos = entity.GetPosition();
+                            var rot = entity.GetRotation().ToEulerAngles();
+                            var constrains = bag.ReadT6(i);
+                            data.pos = new float3(math.lerp(data.pos.x, pos.x, constrains.position.x),
+                                                  math.lerp(data.pos.y, pos.y, constrains.position.y),
+                                                  math.lerp(data.pos.z, pos.z, constrains.position.z));
+                            var euler = data.rot.ToEulerAngles();
+                            euler = new float3(math.lerp(euler.x, rot.x, constrains.rotation.x),
+                                                  math.lerp(euler.y, rot.y, constrains.rotation.y),
+                                                  math.lerp(euler.z, rot.z, constrains.rotation.z));
+                            data.rot = quaternion.Euler(euler);
                             entity.SetPosition(data.pos);
                             entity.SetRotation(data.rot);
 
