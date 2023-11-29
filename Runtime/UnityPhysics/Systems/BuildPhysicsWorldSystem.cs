@@ -2,6 +2,7 @@
 using Unity.Jobs;
 using Unity.Burst;
 using ME.ECS.Essentials.Physics.Components;
+using ME.ECS.Essentials.Physics.Extensions;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
 #else
@@ -41,7 +42,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
-    public sealed class BuildPhysicsWorldSystem : ISystem, IAdvanceTick {
+    public sealed class BuildPhysicsWorldSystem : ISystem, IAdvanceTick, IDrawGizmos {
         
         private UnityPhysicsFeature feature;
 
@@ -528,7 +529,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                                                   math.lerp(euler.y, rot.y, constrains.rotation.y),
                                                   math.lerp(euler.z, rot.z, constrains.rotation.z));
                             data.rot = quaternion.Euler(euler);
-                            entity.SetPosition(data.pos);
+                            entity.SetPosition(data.pos + motionVelocities[i].LinearVelocity);
                             entity.SetRotation(data.rot);
 
                         }
@@ -578,6 +579,44 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             }
             return arr;
             
+        }
+
+        public void OnDrawGizmos() {
+
+            var oldMartix = UnityEngine.Gizmos.matrix;
+            
+            UnityEngine.Gizmos.color = UnityEngine.Color.green;
+            foreach (var body in this.dynamicBodies) {
+
+                var collider = body.Read<PhysicsCollider>();
+                var pos = body.GetPosition();
+                var type = collider.value.Value.Type;
+                UnityEngine.Gizmos.matrix = UnityEngine.Matrix4x4.TRS(pos, body.GetRotation(), UnityEngine.Vector3.one);
+                switch (type) {
+                    
+                    case ColliderType.Sphere:
+                        var sphere = collider.value.As<SphereCollider>();
+                        UnityEngine.Gizmos.DrawWireSphere(sphere.Center, sphere.Radius);
+                        break;
+                    
+                    case ColliderType.Capsule:
+                        var capsule = collider.value.As<CapsuleCollider>();
+                        UnityEngine.Gizmos.DrawWireSphere(capsule.Vertex0, capsule.Radius);
+                        UnityEngine.Gizmos.DrawWireSphere(capsule.Vertex1, capsule.Radius);
+                        break;
+                    
+                    case ColliderType.Box:
+                        UnityEngine.Gizmos.color = UnityEngine.Color.cyan;
+                        var box = collider.value.As<BoxCollider>();
+                        UnityEngine.Gizmos.DrawCube(box.Center, box.Size);
+                        break;
+                    
+                }
+
+            }
+
+            UnityEngine.Gizmos.matrix = oldMartix;
+
         }
 
     }
