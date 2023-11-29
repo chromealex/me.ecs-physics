@@ -23,7 +23,8 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
         ME.ECS.Transform.Container,
         PhysicsCustomTags,
         ME.ECS.Transform.Position,
-        ME.ECS.Transform.Rotation>;
+        ME.ECS.Transform.Rotation,
+        PhysicsConstrains>;
 
     using BagMotion = ME.ECS.Buffers.FilterBag<
         PhysicsMass,
@@ -278,8 +279,21 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                 //this.bag.GetT0(index).value = data.pos;
                 //this.bag.GetT1(index).value = data.rot;
                 ref var vel = ref bag.GetT1(index);
-                vel.Angular = this.motionVelocities[index].AngularVelocity;
-                vel.Linear = this.motionVelocities[index].LinearVelocity;
+                var constrains = bag.ReadT6(index);
+                {
+                    var val = this.motionVelocities[index].AngularVelocity;
+                    val = new float3(constrains.rotation.x == true ? 0f : val.x,
+                                     constrains.rotation.y == true ? 0f : val.y,
+                                     constrains.rotation.z == true ? 0f : val.z);
+                    vel.Angular = val;
+                }
+                {
+                    var val = this.motionVelocities[index].LinearVelocity;
+                    val = new float3(constrains.position.x == true ? 0f : val.x,
+                                     constrains.position.y == true ? 0f : val.y,
+                                     constrains.position.z == true ? 0f : val.z);
+                    vel.Linear = val;
+                }
                 
             }
 

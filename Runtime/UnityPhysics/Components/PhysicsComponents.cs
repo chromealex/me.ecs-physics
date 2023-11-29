@@ -73,6 +73,12 @@ namespace ME.ECS.Essentials.Physics.Components {
 
     }
     
+    public struct PhysicsConstrains : IComponent
+    {
+        public bool3 position;
+        public bool3 rotation;
+    }
+    
     public struct PhysicsVelocity : IComponent {
 
         public float3 Linear;
