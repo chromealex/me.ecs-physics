@@ -282,16 +282,16 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                 var constrains = bag.ReadT6(index);
                 {
                     var val = this.motionVelocities[index].AngularVelocity;
-                    val = new float3(constrains.rotation.x == true ? 0f : val.x,
-                                     constrains.rotation.y == true ? 0f : val.y,
-                                     constrains.rotation.z == true ? 0f : val.z);
+                    val = new float3(math.lerp(val.x, 0f, constrains.rotation.x),
+                                     math.lerp(val.y, 0f, constrains.rotation.y),
+                                     math.lerp(val.z, 0f, constrains.rotation.z));
                     vel.Angular = val;
                 }
                 {
                     var val = this.motionVelocities[index].LinearVelocity;
-                    val = new float3(constrains.position.x == true ? 0f : val.x,
-                                     constrains.position.y == true ? 0f : val.y,
-                                     constrains.position.z == true ? 0f : val.z);
+                    val = new float3(math.lerp(val.x, 0f, constrains.position.x),
+                                     math.lerp(val.y, 0f, constrains.position.y),
+                                     math.lerp(val.z, 0f, constrains.position.z));
                     vel.Linear = val;
                 }
                 
