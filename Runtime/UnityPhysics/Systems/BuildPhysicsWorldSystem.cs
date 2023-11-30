@@ -555,13 +555,13 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             bagMotion.Revert();
             bagJoints.Revert();
 
-            rootPositionsDynamic.Dispose();
-            rootRotationsDynamic.Dispose();
-            rootPositionsStatic.Dispose();
-            rootRotationsStatic.Dispose();
+            if (rootPositionsDynamic.Length > 0) rootPositionsDynamic.Dispose();
+            if (rootRotationsDynamic.Length > 0) rootRotationsDynamic.Dispose();
+            if (rootPositionsStatic.Length > 0) rootPositionsStatic.Dispose();
+            if (rootRotationsStatic.Length > 0) rootRotationsStatic.Dispose();
 
-            collidersDynamic.Dispose();
-            collidersStatic.Dispose();
+            if (collidersDynamic.Length > 0) collidersDynamic.Dispose();
+            if (collidersStatic.Length > 0) collidersStatic.Dispose();
             
             buildStaticTree.Dispose();
 
@@ -571,7 +571,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
         private static NativeArray<quaternion> GetParentRotationsFromBag(Bag bag) {
             
-            var arr = new NativeArray<quaternion>(bag.Length, Allocator.TempJob);
+            var arr = bag.Length > 0 ? new NativeArray<quaternion>(bag.Length, Allocator.TempJob) : default;
             for (int i = 0; i < bag.Length; ++i) {
                 arr[i] = bag.GetEntity(i).GetRotation();
             }
@@ -581,7 +581,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
         private static NativeArray<float3> GetParentPositionsFromBag(Bag bag) {
             
-            var arr = new NativeArray<float3>(bag.Length, Allocator.TempJob);
+            var arr = bag.Length > 0 ? new NativeArray<float3>(bag.Length, Allocator.TempJob) : default;
             for (int i = 0; i < bag.Length; ++i) {
                 arr[i] = bag.GetEntity(i).GetPosition();
             }
@@ -591,7 +591,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
         private static NativeArray<PhysicsCollider> GetColliders(Bag bag) {
             
-            var arr = new NativeArray<PhysicsCollider>(bag.Length, Allocator.TempJob);
+            var arr = bag.Length > 0 ? new NativeArray<PhysicsCollider>(bag.Length, Allocator.TempJob) : default;
             for (int i = 0; i < bag.Length; ++i) {
                 arr[i] = bag.GetEntity(i).Read<PhysicsCollider>();
             }
