@@ -30,7 +30,7 @@ namespace ME.ECS.Essentials.Physics.Components {
 
     }
 
-    public struct PhysicsCollider : ICopyable<PhysicsCollider> {
+    public struct PhysicsCollider : IComponent, IComponentDisposable<PhysicsCollider>, ICopyableUnmanaged {
         
         public BlobAssetReference<ME.ECS.Essentials.Physics.Collider> value;  // null is allowed
 
@@ -38,7 +38,8 @@ namespace ME.ECS.Essentials.Physics.Components {
         public unsafe ME.ECS.Essentials.Physics.Collider* ColliderPtr => (ME.ECS.Essentials.Physics.Collider*)this.value.GetUnsafePtr();
         public ME.ECS.Essentials.Physics.MassProperties MassProperties => this.value.IsCreated ? this.value.Value.MassProperties : ME.ECS.Essentials.Physics.MassProperties.UnitSphere;
 
-        public void CopyFrom(in PhysicsCollider other) {
+        public void ReplaceWith(ref ME.ECS.Collections.LowLevel.Unsafe.MemoryAllocator allocator, in PhysicsCollider other) {
+
             if (this.value.IsCreated == true && other.value.IsCreated == true) {
 
                 this.value.Dispose();
@@ -58,13 +59,16 @@ namespace ME.ECS.Essentials.Physics.Components {
                 // Nothing to do
                 
             }
+            
         }
 
-        public void OnRecycle() {
+        public void OnDispose(ref ME.ECS.Collections.LowLevel.Unsafe.MemoryAllocator allocator) {
+
             if (this.value.IsCreated == true && this.value.IsValid == true) {
                 this.value.Dispose();
             }
             this.value = default;
+
         }
 
     }
