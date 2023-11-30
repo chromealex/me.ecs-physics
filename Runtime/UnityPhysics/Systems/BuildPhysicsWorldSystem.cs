@@ -529,7 +529,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                                                   math.lerp(euler.y, rot.y, constrains.rotation.y),
                                                   math.lerp(euler.z, rot.z, constrains.rotation.z));
                             data.rot = quaternion.Euler(euler);
-                            entity.SetPosition(data.pos + motionVelocities[i].LinearVelocity);
+                            entity.SetPosition(data.pos);
                             entity.SetRotation(data.rot);
 
                         }
