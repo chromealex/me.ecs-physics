@@ -19,13 +19,12 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
     using Unity.Collections;
     
     using Bag = ME.ECS.Buffers.FilterBag<
-        PhysicsCollider,
+        PhysicsConstrains,
         PhysicsVelocity,
         ME.ECS.Transform.Container,
         PhysicsCustomTags,
         ME.ECS.Transform.Position,
-        ME.ECS.Transform.Rotation,
-        PhysicsConstrains>;
+        ME.ECS.Transform.Rotation>;
 
     using BagMotion = ME.ECS.Buffers.FilterBag<
         PhysicsMass,
@@ -159,13 +158,14 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             public NativeArray<float3> bagParentPositions;
             public NativeArray<quaternion> bagParentRotations;
             [ReadOnly] public int FirstBodyIndex;
+            [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public NativeArray<PhysicsCollider> colliders;
             [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public Unity.Collections.NativeArray<ME.ECS.Essentials.Physics.RigidBody> bodies;
             [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public NativeHashMap<Entity, int>.ParallelWriter EntityBodyIndexMap;
 
             public void Execute(ref Bag bag, int index) {
                 
                 int rbIndex = this.FirstBodyIndex + index;
-                var collider = bag.ReadT0(index);
+                var collider = this.colliders[index];
                 var hasChunkPhysicsColliderType = bag.HasT0(index);
                 var hasChunkPhysicsCustomTagsType = bag.HasT3(index);
                 var entity = bag.GetEntity(index);
@@ -280,7 +280,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                 //this.bag.GetT0(index).value = data.pos;
                 //this.bag.GetT1(index).value = data.rot;
                 ref var vel = ref bag.GetT1(index);
-                var constrains = bag.ReadT6(index);
+                var constrains = bag.ReadT0(index);
                 {
                     var val = this.motionVelocities[index].AngularVelocity;
                     val = new float3(math.lerp(val.x, 0f, constrains.rotation.x),
@@ -357,11 +357,14 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             var bagStatic = new Bag(this.staticBodies, Unity.Collections.Allocator.TempJob);
             var bagMotion = new BagMotion(this.dynamicBodies, Unity.Collections.Allocator.TempJob);
             var buildStaticTree = new Unity.Collections.NativeArray<int>(1, Unity.Collections.Allocator.TempJob);
+
+            var collidersDynamic = BuildPhysicsWorldSystem.GetColliders(bag);
+            var collidersStatic = BuildPhysicsWorldSystem.GetColliders(bagStatic);
             
-            var rootPositionsDynamic = this.GetParentPositionsFromBag(bag);
-            var rootRotationsDynamic = this.GetParentRotationsFromBag(bag);
-            var rootPositionsStatic = this.GetParentPositionsFromBag(bagStatic);
-            var rootRotationsStatic = this.GetParentRotationsFromBag(bagStatic);
+            var rootPositionsDynamic = BuildPhysicsWorldSystem.GetParentPositionsFromBag(bag);
+            var rootRotationsDynamic = BuildPhysicsWorldSystem.GetParentRotationsFromBag(bag);
+            var rootPositionsStatic = BuildPhysicsWorldSystem.GetParentPositionsFromBag(bagStatic);
+            var rootRotationsStatic = BuildPhysicsWorldSystem.GetParentRotationsFromBag(bagStatic);
 
             {
                 
@@ -405,6 +408,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                             bodies = this.physicsWorld.Bodies,
                             bagParentPositions = rootPositionsDynamic,
                             bagParentRotations = rootRotationsDynamic,
+                            colliders = collidersDynamic,
                             FirstBodyIndex = 0,
                             EntityBodyIndexMap = this.physicsWorld.CollisionWorld.EntityBodyIndexMap.AsParallelWriter(),
                         }.Schedule(bag));
@@ -424,6 +428,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                             bodies = this.physicsWorld.Bodies,
                             bagParentPositions = rootPositionsStatic,
                             bagParentRotations = rootRotationsStatic,
+                            colliders = collidersStatic,
                             FirstBodyIndex = bag.Length,
                             EntityBodyIndexMap = this.physicsWorld.CollisionWorld.EntityBodyIndexMap.AsParallelWriter(),
                         }.Schedule(bagStatic));
@@ -520,7 +525,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
                             var entity = bag.GetEntity(i);
                             var pos = entity.GetPosition();
                             var rot = entity.GetRotation().ToEulerAngles();
-                            var constrains = bag.ReadT6(i);
+                            var constrains = bag.ReadT0(i);
                             data.pos = new float3(math.lerp(data.pos.x, pos.x, constrains.position.x),
                                                   math.lerp(data.pos.y, pos.y, constrains.position.y),
                                                   math.lerp(data.pos.z, pos.z, constrains.position.z));
@@ -555,13 +560,16 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             rootPositionsStatic.Dispose();
             rootRotationsStatic.Dispose();
 
+            collidersDynamic.Dispose();
+            collidersStatic.Dispose();
+            
             buildStaticTree.Dispose();
 
             marker.End();
 
         }
 
-        private NativeArray<quaternion> GetParentRotationsFromBag(Bag bag) {
+        private static NativeArray<quaternion> GetParentRotationsFromBag(Bag bag) {
             
             var arr = new NativeArray<quaternion>(bag.Length, Allocator.TempJob);
             for (int i = 0; i < bag.Length; ++i) {
@@ -571,11 +579,21 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
 
         }
 
-        private NativeArray<float3> GetParentPositionsFromBag(Bag bag) {
+        private static NativeArray<float3> GetParentPositionsFromBag(Bag bag) {
             
             var arr = new NativeArray<float3>(bag.Length, Allocator.TempJob);
             for (int i = 0; i < bag.Length; ++i) {
                 arr[i] = bag.GetEntity(i).GetPosition();
+            }
+            return arr;
+            
+        }
+
+        private static NativeArray<PhysicsCollider> GetColliders(Bag bag) {
+            
+            var arr = new NativeArray<PhysicsCollider>(bag.Length, Allocator.TempJob);
+            for (int i = 0; i < bag.Length; ++i) {
+                arr[i] = bag.GetEntity(i).Read<PhysicsCollider>();
             }
             return arr;
             
