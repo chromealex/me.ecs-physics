@@ -112,6 +112,7 @@ namespace ME.ECS.Essentials.Physics.Tests {
                     e.ValidateDataUnmanaged<ME.ECS.Transform.Container>();
                     e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsCustomTags>();
                     e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsVelocity>();
+                    e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsConstrains>();
                     e.ValidateDataTag<ME.ECS.Essentials.Physics.Components.IsPhysicsStatic>(true);
                     
                     e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsGravityFactor>();
