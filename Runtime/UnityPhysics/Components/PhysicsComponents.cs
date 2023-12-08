@@ -1,4 +1,5 @@
 ﻿using ME.ECS;
+using ME.ECS.Collections.LowLevel.Unsafe;
 #if FIXED_POINT_MATH
 using ME.ECS.Mathematics;
 #else
@@ -30,6 +31,7 @@ namespace ME.ECS.Essentials.Physics.Components {
 
     }
 
+    #if COMPONENTS_COPYABLE
     public struct PhysicsCollider : ICopyable<PhysicsCollider> {
         
         public BlobAssetReference<ME.ECS.Essentials.Physics.Collider> value;  // null is allowed
@@ -72,7 +74,57 @@ namespace ME.ECS.Essentials.Physics.Components {
         }
 
     }
-    
+    #else
+    public struct PhysicsCollider : IComponent, IComponentDisposable<PhysicsCollider> {
+
+        public BlobAssetReference<ME.ECS.Essentials.Physics.Collider> value;  // null is allowed
+
+        public bool IsValid => this.value.IsCreated;
+        public unsafe ME.ECS.Essentials.Physics.Collider* ColliderPtr => (ME.ECS.Essentials.Physics.Collider*)this.value.GetUnsafePtr();
+        public ME.ECS.Essentials.Physics.MassProperties MassProperties => this.value.IsCreated ? this.value.Value.MassProperties : ME.ECS.Essentials.Physics.MassProperties.UnitSphere;
+
+        public void OnDispose(ref MemoryAllocator allocator) {
+            
+            if (this.value.IsCreated == true && this.value.IsValid == true) {
+                this.value.Dispose();
+            }
+            this.value = default;
+            
+        }
+
+        public void ReplaceWith(ref MemoryAllocator allocator, in PhysicsCollider other) {
+            
+            this.CopyFrom(ref allocator, in other);
+            
+        }
+
+        public void CopyFrom(ref MemoryAllocator allocator, in PhysicsCollider other) {
+            
+            if (this.value.IsCreated == true && other.value.IsCreated == true) {
+
+                this.value.Dispose();
+                this.value = other.value.Value.Clone();
+                
+            } else if (this.value.IsCreated == true && other.value.IsCreated == false) {
+                
+                this.value.Dispose();
+                this.value = default;
+
+            } else if (this.value.IsCreated == false && other.value.IsCreated == true) {
+                
+                this.value = other.value.Value.Clone();
+
+            } else if (this.value.IsCreated == false && other.value.IsCreated == false) {
+                
+                // Nothing to do
+                
+            }
+            
+        }
+
+    }
+    #endif
+
     public struct PhysicsConstrains : IComponent {
         
         public float3 position;

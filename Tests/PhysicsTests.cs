@@ -105,7 +105,11 @@ namespace ME.ECS.Essentials.Physics.Tests {
                 ComponentsInitializerWorld.Setup((e) => {
                             
                     e.ValidateDataUnmanaged<TestComponent>();
+                    #if COMPONENTS_COPYABLE
                     e.ValidateDataCopyable<ME.ECS.Essentials.Physics.Components.PhysicsCollider>();
+                    #else
+                    e.ValidateDataUnmanagedDisposable<ME.ECS.Essentials.Physics.Components.PhysicsCollider>();
+                    #endif
                     e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsMass>();
                     e.ValidateDataUnmanaged<ME.ECS.Essentials.Physics.Components.PhysicsInternal>();
                     e.ValidateDataOneShot<ME.ECS.Essentials.Physics.Components.PhysicsOneShotInternal>();
