@@ -23,7 +23,7 @@ namespace ME.ECS.Essentials.Physics
     {
         [NoAlias] private NativeArray<RigidBody> m_Bodies;    // storage for all the rigid bodies
         [NoAlias] internal Broadphase Broadphase;             // bounding volume hierarchies around subsets of the rigid bodies
-        [NoAlias] internal NativeHashMap<Entity, int> EntityBodyIndexMap;
+        [NoAlias] internal NativeParallelHashMap<Entity, int> EntityBodyIndexMap;
 
         public int NumBodies => Broadphase.NumStaticBodies + Broadphase.NumDynamicBodies;
         public int NumStaticBodies => Broadphase.NumStaticBodies;
@@ -41,14 +41,14 @@ namespace ME.ECS.Essentials.Physics
         {
             m_Bodies = new NativeArray<RigidBody>(numStaticBodies + numDynamicBodies, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             Broadphase = new Broadphase(numStaticBodies, numDynamicBodies);
-            EntityBodyIndexMap = new NativeHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent);
+            EntityBodyIndexMap = new NativeParallelHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent);
         }
 
         internal CollisionWorld(NativeArray<RigidBody> bodies, Broadphase broadphase)
         {
             m_Bodies = bodies;
             Broadphase = broadphase;
-            EntityBodyIndexMap = new NativeHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent);
+            EntityBodyIndexMap = new NativeParallelHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent);
         }
 
         public void Reset(int numStaticBodies, int numDynamicBodies)
@@ -90,7 +90,7 @@ namespace ME.ECS.Essentials.Physics
             {
                 m_Bodies = new NativeArray<RigidBody>(m_Bodies, Allocator.Persistent),
                 Broadphase = (Broadphase)Broadphase.Clone(),
-                EntityBodyIndexMap = new NativeHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent),
+                EntityBodyIndexMap = new NativeParallelHashMap<Entity, int>(m_Bodies.Length, Allocator.Persistent),
             };
             clone.UpdateBodyIndexMap();
             return clone;

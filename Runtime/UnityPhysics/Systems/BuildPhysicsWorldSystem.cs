@@ -94,10 +94,10 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
         internal struct CreateJoints : IJobParallelForFilterBag<BagJoints> {
 
             [ReadOnly] public int NumDynamicBodies;
-            [ReadOnly] public NativeHashMap<Entity, int> EntityBodyIndexMap;
+            [ReadOnly] public NativeParallelHashMap<Entity, int> EntityBodyIndexMap;
 
             [NativeDisableParallelForRestriction] public NativeArray<Joint> Joints;
-            [NativeDisableParallelForRestriction] public NativeHashMap<Entity, int>.ParallelWriter EntityJointIndexMap;
+            [NativeDisableParallelForRestriction] public NativeParallelHashMap<Entity, int>.ParallelWriter EntityJointIndexMap;
 
             public int DefaultStaticBodyIndex;
 
@@ -160,7 +160,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             [ReadOnly] public int FirstBodyIndex;
             [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public NativeArray<PhysicsCollider> colliders;
             [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public Unity.Collections.NativeArray<ME.ECS.Essentials.Physics.RigidBody> bodies;
-            [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public NativeHashMap<Entity, int>.ParallelWriter EntityBodyIndexMap;
+            [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute] public NativeParallelHashMap<Entity, int>.ParallelWriter EntityBodyIndexMap;
 
             public void Execute(ref Bag bag, int index) {
                 
@@ -192,7 +192,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             public int BodyIndex;
 
             [Unity.Collections.LowLevel.Unsafe.NativeDisableContainerSafetyRestrictionAttribute]
-            public NativeHashMap<Entity, int>.ParallelWriter EntityBodyIndexMap;
+            public NativeParallelHashMap<Entity, int>.ParallelWriter EntityBodyIndexMap;
 
             public void Execute() {
 
