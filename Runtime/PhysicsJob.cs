@@ -12,6 +12,16 @@ using ME.ECS.Essentials.Physics;
 
 namespace ME.ECS {
 
+    [JobProducerType(typeof(IJobParallelForDeferExtensions.JobParallelForDeferProducer<>))]
+    public interface IJobParallelForDefer
+    {
+        /// <summary>
+        /// Implement this method to perform work against a specific iteration index.
+        /// </summary>
+        /// <param name="index">The index of the Parallel for loop at which to perform work.</param>
+        void Execute(int index);
+    }
+
     public static class IJobParallelForDeferExtensions
     {
         internal struct JobParallelForDeferProducer<T> where T : struct, IJobParallelForDefer
