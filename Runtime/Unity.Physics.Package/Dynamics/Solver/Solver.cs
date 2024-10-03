@@ -419,7 +419,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         [BurstCompile]
-        private struct ParallelBuildJacobiansJob : IJobParallelForDefer
+        private struct ParallelBuildJacobiansJob : Unity.Jobs.IJobParallelForDefer
         {
             [ReadOnly] public PhysicsWorld World;
 

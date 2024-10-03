@@ -798,7 +798,7 @@ namespace ME.ECS.Essentials.Physics
         }
 
         [BurstCompile]
-        internal unsafe struct BuildBranchesJob : IJobParallelForDefer
+        internal unsafe struct BuildBranchesJob : Unity.Jobs.IJobParallelForDefer
         {
             [ReadOnly] public NativeArray<Aabb> Aabbs;
             [ReadOnly] public NativeArray<CollisionFilter> BodyFilters;

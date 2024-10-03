@@ -69,7 +69,7 @@ namespace ME.ECS.Essentials.Physics
 
         [BurstCompile]
         [NoAlias]
-        struct ParallelCreateContactsJob : IJobParallelForDefer
+        struct ParallelCreateContactsJob : Unity.Jobs.IJobParallelForDefer
         {
             [NoAlias, ReadOnly] public PhysicsWorld World;
             [ReadOnly] public tfloat TimeStep;

@@ -818,7 +818,7 @@ namespace ME.ECS.Essentials.Physics
 
         // Reads broadphase data from static rigid bodies
         [BurstCompile]
-        struct PrepareStaticBodyDataJob : IJobParallelForDefer
+        struct PrepareStaticBodyDataJob : Unity.Jobs.IJobParallelForDefer
         {
             [ReadOnly] public NativeArray<RigidBody> RigidBodies;
             [ReadOnly] public tfloat AabbMargin;
