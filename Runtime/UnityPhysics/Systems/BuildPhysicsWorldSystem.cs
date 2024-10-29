@@ -551,6 +551,7 @@ namespace ME.ECS.Essentials.Physics.Core.Collisions.Systems {
             marker.Begin();
             
             bag.Push();
+            bag.Revert();
             bagStatic.Revert();
             bagMotion.Revert();
             bagJoints.Revert();
